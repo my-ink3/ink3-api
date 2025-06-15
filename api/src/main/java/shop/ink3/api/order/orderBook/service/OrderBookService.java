@@ -66,17 +66,15 @@ public class OrderBookService {
             book.decreaseQuantity(request.getQuantity());
             bookRepository.save(book);
 
-            // 쿠폰 사용 가능 여부 확인
-            LocalDateTime expiresAt = couponStore.getCoupon().getExpiresAt();
-            LocalDateTime issuableFrom = couponStore.getCoupon().getIssuableFrom();
-            LocalDateTime now =  LocalDateTime.now();
-            if(now.isBefore(issuableFrom) && now.isAfter(expiresAt)) {
-                log.info("쿠폰 사용 가능 기간이 아닙니다. CouponStoreId={}", request.getCouponStoreId());
-                throw new CouponInvalidPeriodException(issuableFrom, expiresAt);
-            }
-
             // 쿠폰 상태 변경
             if(couponStore != null ){
+                LocalDateTime expiresAt = couponStore.getCoupon().getExpiresAt();
+                LocalDateTime issuableFrom = couponStore.getCoupon().getIssuableFrom();
+                LocalDateTime now =  LocalDateTime.now();
+                if(now.isBefore(issuableFrom) && now.isAfter(expiresAt)) {
+                    log.info("쿠폰 사용 가능 기간이 아닙니다. CouponStoreId={}", request.getCouponStoreId());
+                    throw new CouponInvalidPeriodException(issuableFrom, expiresAt);
+                }
                 couponStore.update(CouponStatus.USED, LocalDateTime.now());
             }
 

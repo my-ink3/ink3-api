@@ -224,7 +224,7 @@ public class CouponStoreService {
 
         // 직접 매핑된 카테고리 ID들
         List<Long> directCategoryIds = bookCategoryRepository.findAllByBookId(bookId).stream()
-                .map(BookCategory::getId)
+                .map(bookCategory -> bookCategory.getCategory().getId())  // ✔ 진짜 카테고리 ID
                 .toList();
 
         // 조상 카테고리 포함해서 ID 수집

@@ -56,9 +56,7 @@ class CouponStoreControllerTest {
 
         // Controller에 mock 주입
         controller = new CouponStoreController(
-                couponStoreService,
-                bookCouponRepository,
-                categoryCouponRepository
+                couponStoreService
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 

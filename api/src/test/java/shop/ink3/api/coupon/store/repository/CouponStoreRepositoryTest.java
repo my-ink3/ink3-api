@@ -93,7 +93,6 @@ public class CouponStoreRepositoryTest {
                         .salePrice(15000)
                         .quantity(5)
                         .isPackable(true)
-                        .averageRating(0.0)
                         .thumbnailUrl("http://example.com/thumbnail.jpg")
                         .status(BookStatus.AVAILABLE)
                         .build()
