@@ -14,7 +14,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDate;
 import java.util.List;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;

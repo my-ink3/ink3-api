@@ -1,4 +1,4 @@
-package shop.ink3.api.book.bookCategory.entity;
+package shop.ink3.api.book.bookcategory.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

@@ -1,5 +1,6 @@
-package shop.ink3.api.book.bookTag.entity;
+package shop.ink3.api.book.bookauthor.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -10,23 +11,22 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import shop.ink3.api.book.author.entity.Author;
 import shop.ink3.api.book.book.entity.Book;
-import shop.ink3.api.book.tag.entity.Tag;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
 @Getter
-@Table(name = "book_tags")
-public class BookTag {
+@Table(name = "book_authors")
+public class BookAuthor {
 
-    public BookTag(Book book, Tag tag) {
+    public BookAuthor(Book book, Author author, String role) {
+        this.author = author;
         this.book = book;
-        this.tag = tag;
+        this.role = role;
     }
 
     @Id
@@ -38,6 +38,9 @@ public class BookTag {
     private Book book;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tag_id", nullable = false)
-    private Tag tag;
+    @JoinColumn(name = "author_id", nullable = false)
+    private Author author;
+
+    @Column(nullable = false)
+    private String role;
 }
