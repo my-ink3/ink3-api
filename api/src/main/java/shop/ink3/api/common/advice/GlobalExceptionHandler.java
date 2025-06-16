@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import shop.ink3.api.book.category.exception.CategoryHierarchyCycleException;
+import shop.ink3.api.book.category.exception.SelfParentingCategoryException;
 import shop.ink3.api.common.dto.CommonResponse;
 import shop.ink3.api.common.exception.AlreadyExistsException;
 import shop.ink3.api.common.exception.BadRequestException;
@@ -32,7 +34,11 @@ public class GlobalExceptionHandler {
                 .body(CommonResponse.error(HttpStatus.NOT_FOUND, e.getMessage(), null));
     }
 
-    @ExceptionHandler(value = {AlreadyExistsException.class})
+    @ExceptionHandler(value = {
+            AlreadyExistsException.class,
+            SelfParentingCategoryException.class,
+            CategoryHierarchyCycleException.class
+    })
     public ResponseEntity<CommonResponse<Void>> handleAlreadyExistsException(AlreadyExistsException e) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)

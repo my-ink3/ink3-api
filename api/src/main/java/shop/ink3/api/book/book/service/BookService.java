@@ -398,7 +398,9 @@ public class BookService {
         String[] categoryNames = categoryPath.split(">");
 
         Arrays.stream(categoryNames)
-                .map(c -> categoryRepository.findByName(c.strip())
+                .map(String::strip)
+                .distinct()
+                .map(c -> categoryRepository.findByName(c)
                         .orElseGet(() -> categoryRepository.save(Category.builder().name(c).path("").build())))
                 .forEach(categories::add);
 

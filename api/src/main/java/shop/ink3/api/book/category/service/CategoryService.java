@@ -23,7 +23,9 @@ import shop.ink3.api.book.category.dto.CategoryUpdateNameRequest;
 import shop.ink3.api.book.category.entity.Category;
 import shop.ink3.api.book.category.exception.CategoryAlreadyExistsException;
 import shop.ink3.api.book.category.exception.CategoryHasChildrenException;
+import shop.ink3.api.book.category.exception.CategoryHierarchyCycleException;
 import shop.ink3.api.book.category.exception.CategoryNotFoundException;
+import shop.ink3.api.book.category.exception.SelfParentingCategoryException;
 import shop.ink3.api.book.category.repository.CategoryRepository;
 
 @Transactional
@@ -111,12 +113,21 @@ public class CategoryService {
 
     @CacheEvict(value = "categories", allEntries = true)
     public void changeParent(long id, CategoryChangeParentRequest request) {
+        if (id == request.parentId()) {
+            throw new SelfParentingCategoryException(id);
+        }
+
         Category category = categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException(id));
         Category newParent = categoryRepository.findById(request.parentId())
                 .orElseThrow(() -> new CategoryNotFoundException(request.parentId()));
 
         String oldPath = category.getPath() + "/" + id;
         String newPath = newParent.getPath() + "/" + newParent.getId();
+
+        if (newPath.startsWith(oldPath)) {
+            throw new CategoryHierarchyCycleException(id, request.parentId());
+        }
+
         category.updateParent(newParent);
         category.updatePath(newPath);
 
