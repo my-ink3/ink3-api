@@ -73,8 +73,8 @@ public class CouponServiceImpl implements CouponService {
                         .orElseThrow(() -> new PolicyNotFoundException("없는 정책입니다.")))
                 .issuableFrom(req.issuableFrom())
                 .expiresAt(req.expiresAt())
-                .createdAt(LocalDateTime.now())
                 .isActive(req.isActive())
+                .createdAt(LocalDateTime.now())
                 .build();
 
         if (!req.bookIdList().isEmpty()) {
@@ -272,7 +272,7 @@ public class CouponServiceImpl implements CouponService {
         Set<Long> allCategoryIds = new HashSet<>();
 
         bookCategoryRepository.findAllByBookId(book.getId()).forEach(bc ->
-                categoryService.getAllAncestors(bc.getId()).forEach(c -> allCategoryIds.add(c.id()))
+                categoryService.getAllAncestors(bc.getCategory().getId()).forEach(c -> allCategoryIds.add(c.id()))
         );
 
         // 4) 부모 카테고리 기준 CategoryCoupon 엔티티 페이징 조회 (fetch join)
@@ -314,9 +314,12 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public CouponResponse updateCoupon(Long couponId, CouponUpdateRequest req) {
+
         // 1) 기존 Coupon 엔티티 조회
         Coupon coupon = couponRepository.findByIdWithFetch(couponId)
                 .orElseThrow(() -> new CouponNotFoundException(couponId + " 쿠폰을 찾을 수 없습니다."));
+
+        boolean wasActive = coupon.isActive();
 
         // 2) 요청에서 온 policyId 에 해당하는 정책 가져오기
         CouponPolicy newPolicy = policyRepository.findById(req.policyId())
@@ -353,8 +356,11 @@ public class CouponServiceImpl implements CouponService {
         Coupon saved = couponRepository.save(coupon);
 
         //쿠폰 비활성화 시, 관련 Store 상태일괄 변경
-        if (!saved.isActive()) {
+        if (wasActive && !saved.isActive()) {
             couponStoreService.disableCouponStoresByCouponId(couponId);
+        } else if (!wasActive && saved.isActive()) {
+            // ✅ 다시 활성화된 경우
+            couponStoreService.reactivateCouponStoresByCouponId(couponId); // 이 메서드를 새로 구현
         }
 
         List<BookInfo> updatedBookInfos = saved.getBookCoupons().stream()

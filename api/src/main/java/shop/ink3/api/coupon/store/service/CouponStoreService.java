@@ -91,7 +91,7 @@ public class CouponStoreService {
     }
 
     @Transactional // write 트랜잭션
-    public CouponStore issueCommonCoupon(CommonCouponIssueRequest req) {
+    public void issueCommonCoupon(CommonCouponIssueRequest req) {
         // 1) 회원/쿠폰 존재 검증
         User user = userRepository.findById(req.userId())
                 .orElseThrow(() -> new UserNotFoundException(req.userId()));
@@ -120,7 +120,6 @@ public class CouponStoreService {
                 .issuedAt(LocalDateTime.now())
                 .build();
         couponStoreRepository.save(couponStore);
-        return couponStore;
     }
 
     /**
@@ -188,6 +187,13 @@ public class CouponStoreService {
         stores.forEach(store -> store.update(CouponStatus.DISABLED, null));
 
         // → 여기에 빠져 있었던 저장 호출을 추가해야 합니다.
+        couponStoreRepository.saveAll(stores);
+    }
+
+    @Transactional
+    public void reactivateCouponStoresByCouponId(Long couponId) {
+        List<CouponStore> stores = couponStoreRepository.findAllByCouponIdAndStatus(couponId, CouponStatus.DISABLED);
+        stores.forEach(store -> store.update(CouponStatus.READY, null));
         couponStoreRepository.saveAll(stores);
     }
 

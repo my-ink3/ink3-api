@@ -44,12 +44,14 @@ public class Coupon {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(nullable = false)
     private LocalDateTime issuableFrom;
 
-    private boolean isActive;
-
-    @Setter
+    @Column(nullable = false)
     private LocalDateTime expiresAt;
+
+    @Column(nullable = false)
+    private boolean isActive;
 
     private LocalDateTime createdAt;
 
@@ -113,4 +115,5 @@ public class Coupon {
             }
         }
     }
+
 }

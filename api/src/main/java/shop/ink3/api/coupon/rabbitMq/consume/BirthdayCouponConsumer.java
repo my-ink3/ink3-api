@@ -31,46 +31,37 @@ public class BirthdayCouponConsumer {
     private final CouponStoreService couponStoreService;
     private final CouponStoreRepository couponStoreRepository;
 
-    @Async
-    @RabbitListener(queues = "coupon.birthday", concurrency = "3")
-    @Retryable(
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 2000, multiplier = 2)
-    )
-    public void consumeBulk(String payload){
-        try{
+    @RabbitListener(queues = "coupon.birthday")
+    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000, multiplier = 2))
+    public void consumeBulk(String payload) {
+        try {
+            log.info("📥 수신됨 - raw: {}", payload);
+
             BirthdayCouponMessage message = objectMapper.readValue(payload, BirthdayCouponMessage.class);
-            System.out.println(message.userIds());
-
-            CouponCreateRequest couponCreateRequest = new CouponCreateRequest(2L, "BIRTHDAY", LocalDateTime.now(), LocalDateTime.now().plusDays(30), true, Collections.emptyList(), Collections.emptyList());
+            // 정책 ID 1L은 실제 존재하는 값이어야 함
+            CouponCreateRequest couponCreateRequest = new CouponCreateRequest(
+                    1L, "BIRTHDAY",
+                    LocalDateTime.now(), LocalDateTime.now().plusDays(30),
+                    true, Collections.emptyList(), Collections.emptyList()
+            );
             CouponResponse coupon = couponService.createCoupon(couponCreateRequest);
-            Long couponId = coupon.couponId();
 
-            message.userIds().forEach(id -> {
-                boolean alreadyIssued = couponStoreRepository
-                        .existsByStatusAndUserIdAndOriginType(
-                                CouponStatus.READY,
-                                id,
-                                OriginType.BIRTHDAY
-                        );
-
-                // READY 상태·생일쿠폰(originType=BIRTHDAY)이 이미 있으면 발급하지 않음
+            message.userIds().forEach(userId -> {
+                boolean alreadyIssued = couponStoreRepository.existsByStatusAndUserIdAndOriginType(
+                        CouponStatus.READY, userId, OriginType.BIRTHDAY
+                );
                 if (!alreadyIssued) {
                     couponStoreService.issueCommonCoupon(
-                            new CommonCouponIssueRequest(
-                                    id,
-                                    couponId,
-                                    OriginType.BIRTHDAY,
-                                    null
-                            )
+                            new CommonCouponIssueRequest(userId, coupon.couponId(), OriginType.BIRTHDAY, null)
                     );
-                }else {
-                    log.info("userId={} : 이미 생일 쿠폰이 발급된 상태여서 발급을 생략합니다.", id);
+                    log.info("✅ userId={} 발급 성공", userId);
+                } else {
+                    log.info("⚠️ userId={} 이미 발급되어 생략", userId);
                 }
             });
 
-        }catch (Exception e){
-            log.error("쿠폰 발급 실패 수동으로 처리해야 합니다. - payload: {}", payload, e);
+        } catch (Exception e) {
+            log.error("❌ 생일 쿠폰 발급 실패 - payload: {}", payload, e);
             throw new AmqpRejectAndDontRequeueException("Failed to process message", e);
         }
     }

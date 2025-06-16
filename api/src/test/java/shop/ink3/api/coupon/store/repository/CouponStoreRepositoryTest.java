@@ -71,6 +71,7 @@ public class CouponStoreRepositoryTest {
                 Coupon.builder()
                         .name("TEST_COUPON")
                         .isActive(true)
+                        .issuableFrom(LocalDateTime.now())
                         .expiresAt(LocalDateTime.now().plusDays(7))
                         .build()
         );
@@ -155,7 +156,9 @@ public class CouponStoreRepositoryTest {
         Coupon coupon = em.persistAndFlush(
                 Coupon.builder()
                         .name("STATUS_TEST_COUPON")
+                        .issuableFrom(LocalDateTime.now())
                         .expiresAt(LocalDateTime.now().plusDays(7))
+                        .isActive(true)
                         .build()
         );
 

@@ -1,5 +1,6 @@
 package shop.ink3.api.coupon.coupon.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 import java.util.List;
 import shop.ink3.api.coupon.coupon.entity.Coupon;
@@ -13,7 +14,7 @@ public record CouponResponse(
         int discountValue,
         LocalDateTime issuableFrom,
         LocalDateTime expiresAt,
-        boolean isActive,
+        @JsonProperty("isActive")boolean isActive,
         LocalDateTime createdAt,
         List<BookInfo> books,
         List<CategoryInfo> categories

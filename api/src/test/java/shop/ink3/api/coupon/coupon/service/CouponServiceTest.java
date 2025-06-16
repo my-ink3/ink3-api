@@ -414,14 +414,16 @@ class CouponServiceTest {
     }
 
     @Test
-    @DisplayName("updateCoupon — isActive=false 일 때 CouponStoreService.disable 호출")
+    @DisplayName("updateCoupon — isActive=false 로 변경되면 CouponStoreService.disable 호출")
     void updateCoupon_whenBecomesInactive_thenDisableStores() {
+
+        // ───── given ─────
         Long couponId = 5L;
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime newExpires = now.plusDays(10);
 
-        // 기존 쿠폰 엔티티 준비
-        Coupon realCoupon = Coupon.builder()
+        /* ① 수정 전 쿠폰(활성) */
+        Coupon before = Coupon.builder()
                 .id(couponId)
                 .couponPolicy(CouponPolicy.builder().id(1L).build())
                 .name("old")
@@ -429,33 +431,43 @@ class CouponServiceTest {
                 .expiresAt(now.plusDays(5))
                 .isActive(true)
                 .build();
-        Coupon existing = spy(realCoupon);
         when(couponRepository.findByIdWithFetch(couponId))
-                .thenReturn(Optional.of(existing));
+                .thenReturn(Optional.of(before));
 
-        // 새 정책 준비
-        CouponPolicy newPolicy = CouponPolicy.builder().id(2L).discountPercentage(10).discountValue(0)
+        /* ② 새 정책 */
+        CouponPolicy newPolicy = CouponPolicy.builder()
+                .id(2L).discountPercentage(10).discountValue(0)
                 .build();
-        when(policyRepository.findById(2L))
-                .thenReturn(Optional.of(newPolicy));
+        when(policyRepository.findById(2L)).thenReturn(Optional.of(newPolicy));
 
-        // save 후 isActive=false 반환
-        when(couponRepository.save(existing)).thenReturn(existing);
-        doReturn(false).when(existing).isActive();
+        /* ③ 저장 이후 상태(비활성) 객체를 직접 build */
+        Coupon after = Coupon.builder()
+                .id(couponId)
+                .couponPolicy(newPolicy)     // 정책이 바뀐 경우
+                .name("new")
+                .issuableFrom(now)
+                .expiresAt(newExpires)
+                .isActive(false)             // ← 비활성!
+                .build();
+        when(couponRepository.save(any(Coupon.class))).thenReturn(after);
 
-        // 비활성화 요청
+        /* ④ 요청(active=false) */
         CouponUpdateRequest req = new CouponUpdateRequest(
                 2L, "new", now, newExpires,
-                false,            // isActive=false!
+                false,                       // 비활성로 변경
                 List.of(), List.of()
         );
 
+        // ───── when ─────
         couponService.updateCoupon(couponId, req);
 
-        // disableCouponStoresByCouponId가 1회 호출되어야 함
+        // ───── then ─────
         verify(couponStoreService, times(1))
                 .disableCouponStoresByCouponId(couponId);
     }
+
+
+
 
     @Test
     @DisplayName("updateCoupon — isActive=true 일 때 CouponStoreService.disable 호출 안 됨")
