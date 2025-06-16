@@ -47,6 +47,8 @@ import shop.ink3.api.book.tag.entity.Tag;
 import shop.ink3.api.book.tag.repository.TagRepository;
 import shop.ink3.api.common.dto.PageResponse;
 import shop.ink3.api.common.uploader.MinioService;
+import shop.ink3.api.review.review.repository.ReviewRepository;
+import shop.ink3.api.user.like.repository.LikeRepository;
 
 @Transactional
 @RequiredArgsConstructor
@@ -58,9 +60,11 @@ public class BookService {
     private final PublisherRepository publisherRepository;
     private final TagRepository tagRepository;
     private final BookTagRepository bookTagRepository;
-    private final MinioService minioService;
     private final BookAuthorRepository bookAuthorRepository;
     private final BookCategoryRepository bookCategoryRepository;
+    private final ReviewRepository reviewRepository;
+    private final LikeRepository likeRepository;
+    private final MinioService minioService;
     private final CategoryService categoryService;
 
     @Value("${minio.book-bucket}")
@@ -72,12 +76,16 @@ public class BookService {
         List<List<CategoryFlatDto>> categories = getBookCategories(bookId);
         List<BookAuthorDto> authors = getBookAuthors(bookId);
         List<String> tags = getBookTags(bookId);
+        Double averageRating = reviewRepository.findAverageRatingByBookId(bookId).orElse(0.0);
+        Long likeCount = likeRepository.countByBookId(bookId);
         return BookDetailResponse.from(
                 book,
                 getThumbnailUrl(book),
                 categories,
                 authors,
-                tags
+                tags,
+                averageRating,
+                likeCount
         );
     }
 
@@ -174,7 +182,9 @@ public class BookService {
                 minioService.getPresignedUrl(book.getThumbnailUrl(), bucket),
                 categories,
                 request.authors(),
-                request.tags()
+                request.tags(),
+            0.0,
+            0L
         );
     }
 
@@ -237,7 +247,9 @@ public class BookService {
                 getThumbnailUrl(book),
                 categories,
                 request.authors(),
-                request.tags()
+                request.tags(),
+            0.0,
+            0L
         );
     }
 
@@ -343,7 +355,9 @@ public class BookService {
                 book.getThumbnailUrl(),
                 categories,
                 authors,
-                request.tags()
+                request.tags(),
+            0.0,
+            0L
         );
     }
 
