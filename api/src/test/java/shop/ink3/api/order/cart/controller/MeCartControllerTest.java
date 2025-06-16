@@ -122,4 +122,40 @@ class MeCartControllerTest {
                 .header("X-User-Id", user.getId()))
             .andExpect(status().isOk());
     }
+
+    @Test
+    @DisplayName("내 장바구니 + 쿠폰 목록 조회")
+    void getCartsWithCoupons() throws Exception {
+        Mockito.when(cartService.getCartItemsWithCoupons(user.getId()))
+            .thenReturn(List.of());
+
+        mockMvc.perform(get("/me/carts/coupons")
+                .header("X-User-Id", user.getId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data").isArray());
+    }
+
+    @Test
+    @DisplayName("선택 장바구니 + 쿠폰 목록 조회")
+    void getSelectCartsWithCoupons() throws Exception {
+        Mockito.when(cartService.getSelectCartsWithCoupon(eq(user.getId()), any()))
+            .thenReturn(List.of());
+
+        mockMvc.perform(get("/me/carts/selected/coupons")
+                .header("X-User-Id", user.getId())
+                .param("cartIds", "1", "2"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data").isArray());
+    }
+
+    @Test
+    @DisplayName("잘못된 요청 본문 - 장바구니 추가 시 유효성 검사 실패")
+    void addCart_invalidRequest() throws Exception {
+        mockMvc.perform(post("/me/carts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", user.getId())
+                .content(objectMapper.writeValueAsString(new MeCartRequest(null, -1))))
+            .andExpect(status().isBadRequest());
+    }
+
 }

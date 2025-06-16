@@ -73,6 +73,22 @@ class MeReviewControllerTest {
     }
 
     @Test
+    @DisplayName("이미지 없이 리뷰 등록")
+    void addReviewWithoutImage() throws Exception {
+        when(reviewService.addReview(any(), any())).thenReturn(reviewResponse);
+
+        mockMvc.perform(multipart("/me/reviews")
+                .param("orderBookId", "1")
+                .param("title", "제목")
+                .param("content", "내용")
+                .param("rating", "5")
+                .header("X-User-Id", "1")
+                .contentType(MediaType.MULTIPART_FORM_DATA))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.title").value("제목"));
+    }
+
+    @Test
     @DisplayName("리뷰 수정")
     void updateReview() throws Exception {
         ReviewResponse updatedResponse = new ReviewResponse(1L, 1L, 1L, 1L, "제목 수정", "제목 내용 수정", 4,
