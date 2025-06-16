@@ -26,6 +26,7 @@ import shop.ink3.api.book.book.enums.SortType;
 import shop.ink3.api.book.book.service.BookService;
 import shop.ink3.api.common.dto.CommonResponse;
 import shop.ink3.api.common.dto.PageResponse;
+import shop.ink3.api.elastic.repository.BookSearchRedisRepository;
 
 @RequestMapping("/books")
 @RequiredArgsConstructor
@@ -33,7 +34,7 @@ import shop.ink3.api.common.dto.PageResponse;
 public class BookController {
     private final BookService bookService;
     private final ObjectMapper objectMapper;
-    // private final BookSearchService bookSearchService;
+    private final BookSearchRedisRepository bookSearchRedisRepository;
 
     @GetMapping("/{bookId}")
     public ResponseEntity<CommonResponse<BookDetailResponse>> getBookByIdWithParentCategory(@PathVariable Long bookId) {
@@ -98,11 +99,22 @@ public class BookController {
                     BookCreateRequest.class
             );
             BookDetailResponse response = bookService.createBook(bookCreateRequest, coverImage);
-            // bookSearchService.indexBook(new BookDocument(response));
             return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.create(response));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(CommonResponse.error(HttpStatus.BAD_REQUEST, e.getMessage(), null));
         }
+    }
+
+    @PostMapping("/{bookId}/view")
+    public ResponseEntity<Void> increaseViewCount(@PathVariable Long bookId) {
+        bookSearchRedisRepository.incrementViewCount(bookId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{bookId}/search")
+    public ResponseEntity<Void> increaseSearchCount(@PathVariable Long bookId) {
+        bookSearchRedisRepository.incrementSearchCount(bookId);
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{bookId}")
@@ -115,7 +127,6 @@ public class BookController {
             BookUpdateRequest bookUpdateRequest = objectMapper.readValue(bookUpdateRequestJson,
                     BookUpdateRequest.class);
             BookDetailResponse response = bookService.updateBook(bookId, bookUpdateRequest, coverImage);
-            // bookSearchService.indexBook(new BookDocument(response));
             return ResponseEntity.ok(CommonResponse.update(response));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(CommonResponse.error(HttpStatus.BAD_REQUEST, e.getMessage(), null));

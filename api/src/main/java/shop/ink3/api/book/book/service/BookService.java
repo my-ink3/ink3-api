@@ -47,6 +47,8 @@ import shop.ink3.api.book.tag.entity.Tag;
 import shop.ink3.api.book.tag.repository.TagRepository;
 import shop.ink3.api.common.dto.PageResponse;
 import shop.ink3.api.common.uploader.MinioService;
+import shop.ink3.api.elastic.model.BookDocument;
+import shop.ink3.api.elastic.service.BookSearchService;
 
 @Transactional
 @RequiredArgsConstructor
@@ -62,6 +64,7 @@ public class BookService {
     private final BookAuthorRepository bookAuthorRepository;
     private final BookCategoryRepository bookCategoryRepository;
     private final CategoryService categoryService;
+    private final BookSearchService bookSearchService;
 
     @Value("${minio.book-bucket}")
     private String bucket;
@@ -169,13 +172,17 @@ public class BookService {
 
         List<List<CategoryFlatDto>> categories = getBookCategories(book.getId());
 
-        return BookDetailResponse.from(
+        BookDetailResponse response = BookDetailResponse.from(
                 book,
                 minioService.getPresignedUrl(book.getThumbnailUrl(), bucket),
                 categories,
                 request.authors(),
                 request.tags()
         );
+
+        bookSearchService.indexBook(new BookDocument(response));
+
+        return response;
     }
 
     public BookDetailResponse updateBook(Long bookId, BookUpdateRequest request, MultipartFile coverImage) {
@@ -232,22 +239,28 @@ public class BookService {
 
         List<List<CategoryFlatDto>> categories = getBookCategories(book.getId());
 
-        return BookDetailResponse.from(
+        BookDetailResponse response = BookDetailResponse.from(
                 book,
                 getThumbnailUrl(book),
                 categories,
                 request.authors(),
                 request.tags()
         );
+
+        bookSearchService.updateBook(response);
+
+        return response;
     }
 
     public void deleteBook(Long bookId) {
         Book book = bookRepository.findById(bookId).orElseThrow(
                 () -> new BookNotFoundException(bookId));
+
         book.delete();
+        bookSearchService.deleteBook(bookId);
     }
 
-    public List<List<CategoryFlatDto>> getBookCategories(long bookId) {
+    private List<List<CategoryFlatDto>> getBookCategories(long bookId) {
         List<List<CategoryFlatDto>> categories = new ArrayList<>();
         bookCategoryRepository.findAllByBookId(bookId).stream()
                 .map(bc -> categoryService.getAllAncestors(bc.getCategory().getId()))
@@ -255,7 +268,7 @@ public class BookService {
         return categories;
     }
 
-    public void addCategoryToBook(Long bookId, Long categoryId) {
+    private void addCategoryToBook(Long bookId, Long categoryId) {
         Book book = bookRepository.findById(bookId).orElseThrow(() -> new BookNotFoundException(bookId));
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CategoryNotFoundException(categoryId));
@@ -265,13 +278,13 @@ public class BookService {
         bookCategoryRepository.save(new BookCategory(book, category));
     }
 
-    public List<BookAuthorDto> getBookAuthors(long bookId) {
+    private List<BookAuthorDto> getBookAuthors(long bookId) {
         return bookAuthorRepository.findAllByBookId(bookId).stream()
                 .map(ba -> new BookAuthorDto(ba.getAuthor().getName(), ba.getRole()))
                 .toList();
     }
 
-    public void addAuthorToBook(Long bookId, BookAuthorDto dto) {
+    private void addAuthorToBook(Long bookId, BookAuthorDto dto) {
         Book book = bookRepository.findById(bookId).orElseThrow(() -> new BookNotFoundException(bookId));
         Author author = authorRepository.findByName(dto.name())
                 .orElseGet(() -> authorRepository.save(Author.builder().name(dto.name()).build()));
@@ -280,13 +293,13 @@ public class BookService {
         bookAuthorRepository.save(bookAuthor);
     }
 
-    public List<String> getBookTags(long bookId) {
+    private List<String> getBookTags(long bookId) {
         return bookTagRepository.findAllByBookId(bookId).stream()
                 .map(bt -> bt.getTag().getName())
                 .toList();
     }
 
-    public void addTagToBook(Long bookId, String tagName) {
+    private void addTagToBook(Long bookId, String tagName) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new BookNotFoundException(bookId));
         Tag tag = tagRepository.findByName(tagName)
@@ -338,13 +351,17 @@ public class BookService {
             request.tags().forEach(tag -> addTagToBook(book.getId(), tag));
         }
 
-        return BookDetailResponse.from(
+        BookDetailResponse response = BookDetailResponse.from(
                 book,
                 book.getThumbnailUrl(),
                 categories,
                 authors,
                 request.tags()
         );
+
+        bookSearchService.indexBook(new BookDocument(response));
+
+        return response;
     }
 
     public List<BookAuthorDto> parseAuthors(String rawAuthors) {

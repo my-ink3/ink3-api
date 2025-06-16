@@ -44,7 +44,7 @@ public class RedisConfig {
                 ));
 
         Map<String, RedisCacheConfiguration> configs = new HashMap<>();
-        configs.put("categories", defaults.entryTtl(Duration.ZERO));
+        configs.put("categories", defaults.entryTtl(Duration.ofDays(1)));
 
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(defaults)

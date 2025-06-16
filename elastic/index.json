@@ -43,22 +43,19 @@
         "type": "integer"
       },
       "rating": {
-        "type": "float"
-      },
-      "ratingCount": {
-        "type": "integer"
+        "type": "double"
       },
       "reviewCount": {
-        "type": "integer"
+        "type": "long"
       },
       "viewCount": {
-        "type": "integer"
+        "type": "long"
       },
       "searchCount": {
-        "type": "integer"
+        "type": "long"
       },
       "popularityScore": {
-        "type": "integer"
+        "type": "long"
       }
     }
   }
