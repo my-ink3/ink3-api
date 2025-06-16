@@ -30,4 +30,20 @@ public record CartResponse(
             cart.getQuantity()
         );
     }
+
+    public static CartResponse from(Cart cart, String presignedUrl) {
+        Book book = cart.getBook();
+        Long userId = cart.getUser() != null ? cart.getUser().getId() : null;
+        return new CartResponse(
+            cart.getId(),
+            userId,
+            book.getId(),
+            book.getTitle(),
+            book.getOriginalPrice(),
+            book.getSalePrice(),
+            book.getDiscountRate(),
+            presignedUrl,
+            cart.getQuantity()
+        );
+    }
 }

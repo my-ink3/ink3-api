@@ -19,10 +19,9 @@ public record CartCouponResponse(
     int quantity,
     List<CouponStoreDto> applicableCoupons
 ) {
-    public static CartCouponResponse from(Cart cart, List<CouponStoreDto> coupons) {
+    public static CartCouponResponse from(Cart cart, List<CouponStoreDto> coupons, String presignedUrl) {
         Book book = cart.getBook();
         Long userId = cart.getUser() != null ? cart.getUser().getId() : null;
-
         return new CartCouponResponse(
             cart.getId(),
             userId,
@@ -31,7 +30,7 @@ public record CartCouponResponse(
             book.getOriginalPrice(),
             book.getSalePrice(),
             book.getDiscountRate(),
-            book.getThumbnailUrl(),
+            presignedUrl,
             book.isPackable(),
             cart.getQuantity(),
             coupons

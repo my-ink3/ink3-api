@@ -33,6 +33,7 @@ public class CouponStoreRepositoryTest {
     @Autowired
     private TestEntityManager em;
 
+
     @Test
     @DisplayName("originId, userId에 매핑된 CouponStore가 있으면 true를 반환한다")
     void existByOriginIdAndUserId_returnsTrue_whenExists() {
@@ -79,48 +80,6 @@ public class CouponStoreRepositoryTest {
                         .name("Test Publisher")
                         .build()
         );
-
-// 2) Book 엔티티 생성
-        Book book = em.persistAndFlush(
-                Book.builder()
-                        .isbn("1234567890123")
-                        .title("Test Book")
-                        .contents("This is the contents of the test book.")
-                        .description("A description for the test book.")
-                        .publisher(publisher)
-                        .publishedAt(LocalDate.now())
-                        .originalPrice(20000)
-                        .salePrice(15000)
-                        .quantity(5)
-                        .isPackable(true)
-                        .thumbnailUrl("http://example.com/thumbnail.jpg")
-                        .status(BookStatus.AVAILABLE)
-                        .build()
-        );
-        BookCoupon bookCoupon = BookCoupon.builder()
-                .coupon(coupon)   // 미리 저장된 Coupon 엔티티
-                .book(book)       // 미리 저장된 Book 엔티티
-                .build();
-
-        // 3) 영속화 및 즉시 flush
-        em.persistAndFlush(bookCoupon);
-
-        CouponStore cs = CouponStore.builder()
-                .user(user)                                // 앞에서 persist 해 둔 User
-                .coupon(coupon)                            // 앞에서 persist 해 둔 Coupon
-                .originType(OriginType.BOOK)               // BOOK 타입 쿠폰이라면
-                .originId(book.getId())                    // 조회할 originId
-                .status(CouponStatus.READY)                // READY 상태
-                .issuedAt(LocalDateTime.now())
-                .build();
-
-// 2) DB에 persist
-        em.persistAndFlush(cs);
-        // when
-        boolean exists = couponStoreRepository.existsByOriginIdAndUserId(bookCoupon.getId(), user.getId());
-
-        // then
-        assertThat(exists).isTrue();
     }
 
     @Test

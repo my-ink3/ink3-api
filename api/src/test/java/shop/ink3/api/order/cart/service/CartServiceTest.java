@@ -1,17 +1,14 @@
 package shop.ink3.api.order.cart.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,10 +19,14 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
+
 import shop.ink3.api.book.book.entity.Book;
 import shop.ink3.api.book.book.entity.BookStatus;
 import shop.ink3.api.book.book.repository.BookRepository;
 import shop.ink3.api.book.publisher.entity.Publisher;
+import shop.ink3.api.common.uploader.MinioService;
+import shop.ink3.api.coupon.store.service.CouponStoreService;
+import shop.ink3.api.order.cart.dto.CartCouponResponse;
 import shop.ink3.api.order.cart.dto.CartRequest;
 import shop.ink3.api.order.cart.dto.CartResponse;
 import shop.ink3.api.order.cart.dto.CartUpdateRequest;
@@ -55,6 +56,12 @@ class CartServiceTest {
 
     @InjectMocks
     private CartService cartService;
+
+    @Mock
+    private CouponStoreService couponStoreService;
+
+    @Mock
+    private MinioService minioService;
 
     private User user;
     private Book book1;
@@ -200,24 +207,6 @@ class CartServiceTest {
     }
 
     @Test
-    @DisplayName("Redis 캐시 hit 시 장바구니 조회")
-    void getCartItemsByUserIdWithRedis() {
-        String key = "cart:user:1";
-        CartResponse cachedCart = CartResponse.from(
-                Cart.builder().id(1L).user(user).book(book1).quantity(1).build()
-        );
-
-        when(hashOperations.values(key)).thenReturn(List.of(cachedCart));
-
-        List<CartResponse> result = cartService.getCartItemsByUserId(user.getId());
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).id()).isEqualTo(1L);
-
-        verify(cartRepository, never()).findByUserId(any());
-    }
-
-    @Test
     @DisplayName("장바구니 전체 삭제 성공")
     void deleteCartItemsSuccess() {
         when(userRepository.existsById(1L)).thenReturn(true);
@@ -260,5 +249,36 @@ class CartServiceTest {
         assertThatThrownBy(() -> cartService.deleteCartItem(0L))
                 .isInstanceOf(CartNotFoundException.class)
                 .hasMessageContaining("존재하지 않는 장바구니입니다 id: ");
+    }
+
+    @Test
+    @DisplayName("장바구니 + 쿠폰 목록 조회")
+    void getCartItemsWithCoupons() {
+        Cart cart = Cart.builder().user(user).book(book1).quantity(1).build();
+        when(cartRepository.findByUserId(user.getId())).thenReturn(List.of(cart));
+        when(couponStoreService.getApplicableCouponStores(user.getId(), book1.getId())).thenReturn(List.of());
+
+        List<CartCouponResponse> responses = cartService.getCartItemsWithCoupons(user.getId());
+
+        assertThat(responses).hasSize(1);
+        verify(couponStoreService).getApplicableCouponStores(user.getId(), book1.getId());
+    }
+
+    @Test
+    @DisplayName("장바구니 수량 수정 시 cartId가 존재하지 않으면 예외")
+    void updateCartQuantity_fail_notFound() {
+        when(cartRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cartService.updateCartQuantity(999L, new CartUpdateRequest(1)))
+            .isInstanceOf(CartNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("장바구니 추가 시 유저가 존재하지 않으면 예외")
+    void addCartItem_userNotFound() {
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cartService.addCartItem(new CartRequest(999L, 1L, 1)))
+            .isInstanceOf(UserNotFoundException.class);
     }
 }

@@ -230,7 +230,7 @@ public class CouponStoreService {
 
         // 직접 매핑된 카테고리 ID들
         List<Long> directCategoryIds = bookCategoryRepository.findAllByBookId(bookId).stream()
-                .map(BookCategory::getId)
+                .map(bookCategory -> bookCategory.getCategory().getId())  // ✔ 진짜 카테고리 ID
                 .toList();
 
         // 조상 카테고리 포함해서 ID 수집
@@ -275,6 +275,7 @@ public class CouponStoreService {
                 cs.getId(),
                 cs.getCoupon().getId(),
                 cs.getCoupon().getName(),
+                cs.getCoupon().getIssuableFrom(),
                 cs.getCoupon().getExpiresAt(),
                 cs.getOriginType(),
                 cs.getOriginId(),
@@ -286,6 +287,7 @@ public class CouponStoreService {
                 (cs.getCoupon().getCouponPolicy().getDiscountPercentage() != null)
                         ? cs.getCoupon().getCouponPolicy().getDiscountPercentage()
                         : null,
+                cs.getCoupon().getCouponPolicy().getMinimumOrderAmount(),
                 cs.getCoupon().getCouponPolicy().getMaximumDiscountAmount()
         );
     }
