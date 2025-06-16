@@ -47,8 +47,6 @@ import shop.ink3.api.book.tag.entity.Tag;
 import shop.ink3.api.book.tag.repository.TagRepository;
 import shop.ink3.api.common.dto.PageResponse;
 import shop.ink3.api.common.uploader.MinioService;
-import shop.ink3.api.review.review.repository.ReviewRepository;
-import shop.ink3.api.user.like.repository.LikeRepository;
 import shop.ink3.api.elastic.model.BookDocument;
 import shop.ink3.api.elastic.service.BookSearchService;
 
@@ -64,8 +62,6 @@ public class BookService {
     private final BookTagRepository bookTagRepository;
     private final BookAuthorRepository bookAuthorRepository;
     private final BookCategoryRepository bookCategoryRepository;
-    private final ReviewRepository reviewRepository;
-    private final LikeRepository likeRepository;
     private final MinioService minioService;
     private final CategoryService categoryService;
     private final BookSearchService bookSearchService;
