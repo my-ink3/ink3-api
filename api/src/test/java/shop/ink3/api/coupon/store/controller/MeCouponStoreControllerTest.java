@@ -83,8 +83,8 @@ class MeCouponStoreControllerTest {
                 .param("bookId", bookId.toString()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(2))
-            .andExpect(jsonPath("$[0].id").value(1))
-            .andExpect(jsonPath("$[1].discountAmount").value(2000));
+            .andExpect(jsonPath("$[0].storeId").value(1))
+            .andExpect(jsonPath("$[1].discountValue").value(1000));
     }
 
     @Test
