@@ -145,6 +145,18 @@ class PublisherControllerTest {
     }
 
     @Test
+    void getPublisherWithoutIdOrName() throws Exception {
+        mockMvc.perform(get("/pubs/detail"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.data").value(Matchers.nullValue()))
+                .andDo(print());
+    }
+
+    @Test
     void createPublisher() throws Exception {
         PublisherCreateRequest request = new PublisherCreateRequest("testPublisher");
         PublisherResponse response = new PublisherResponse(1L, "testPublisher");
