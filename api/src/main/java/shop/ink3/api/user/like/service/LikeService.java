@@ -51,6 +51,10 @@ public class LikeService {
 
         User user = userRepository.getReferenceById(userId);
         Book book = bookRepository.getReferenceById(request.bookId());
+
+        book.incrementLikeCount();
+        bookRepository.save(book);
+
         Like like = Like.builder().user(user).book(book).build();
         return LikeResponse.from(likeRepository.save(like));
     }
@@ -58,6 +62,11 @@ public class LikeService {
     public void deleteLike(long userId, long likeId) {
         Like like = likeRepository.findByIdAndUserId(likeId, userId)
                 .orElseThrow(() -> new LikeNotFoundException(likeId));
+
+        Book book = like.getBook();
+        book.decrementLikeCount();
+        bookRepository.save(book);
+
         likeRepository.delete(like);
     }
 }

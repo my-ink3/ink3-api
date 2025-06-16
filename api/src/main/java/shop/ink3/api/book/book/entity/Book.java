@@ -120,12 +120,18 @@ public class Book {
     }
 
     public void addRating(int rating) {
+        if (this.totalRating == null) this.totalRating = 0L;
+        if (this.reviewCount == null) this.reviewCount = 0L;
         this.totalRating += rating;
         this.reviewCount++;
     }
 
     public void updateRating(int oldRating, int newRating) {
         this.totalRating = this.totalRating - oldRating + newRating;
+    }
+
+    public void updateReviewCount(Long reviewCount) {
+        this.reviewCount = reviewCount;
     }
 
     public void incrementLikeCount() {
