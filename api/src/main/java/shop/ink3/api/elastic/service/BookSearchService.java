@@ -136,16 +136,7 @@ public class BookSearchService {
     public void updateBook(BookDetailResponse bookDetailResponse) {
         BookDocument bookDocument = getBook(bookDetailResponse.id());
         bookDocument.updateBookDocument(bookDetailResponse);
-        try {
-            client.update(u -> u
-                            .index(index)
-                            .id(bookDocument.getId().toString())
-                            .upsert(bookDocument),
-                    BookDocument.class
-            );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        indexBook(bookDocument);
     }
 
     public void updateRatingAndReviewCount(long bookId, double rating, long reviewCount) {
