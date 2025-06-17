@@ -1,358 +1,137 @@
-//package shop.ink3.api.coupon.store.service;
-//
-//import java.util.List;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import shop.ink3.api.coupon.store.dto.CouponStoreDto;
-//import shop.ink3.api.coupon.store.entity.CouponStatus;
-//import shop.ink3.api.coupon.store.entity.OriginType;
-//
-//@ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
-//class CouponStoreServiceTest {
-//
-//    @Mock private CouponRepository couponRepository;
-//    @Mock private UserRepository userRepository;
-//    @Mock private CouponStoreRepository couponStoreRepository;
-//    @Mock private BookCouponRepository bookCouponRepository;
-//    @Mock private CategoryCouponService categoryCouponService;
-//    @Mock private BookRepository bookRepository;
-//    @Mock private CategoryRepository categoryRepository;
-//
-//    @InjectMocks private CouponStoreService couponStoreService;
-//
-//    private User user;
-//    private Coupon coupon;
-//    private final Long USER_ID = 1L;
-//    private final Long BOOK_ID = 10L;
-//    private LocalDateTime now;
-//
-//    @BeforeEach
-//    void setUp() {
-//        user = mock(User.class);
-//        lenient().when(user.getId()).thenReturn(1L);
-//
-//        coupon = mock(Coupon.class);
-//        lenient().when(coupon.getId()).thenReturn(100L);
-//        now = LocalDateTime.now();
-//    }
-//
-//    // ===========================
-//    // issueCoupon() 테스트
-//    // ===========================
-//
-//    @Test
-//    void issueCoupon_withOriginId_succeeds() {
-//        Long userId = 1L;
-//        Long couponId = 100L;
-//        OriginType originType = OriginType.BOOK;
-//        Long originId = 200L;
-//        var request = new CommonCouponIssueRequest(userId, couponId, originType, originId);
-//
-//        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-//        when(couponRepository.findById(couponId)).thenReturn(Optional.of(coupon));
-//        when(couponStoreRepository.existsByUserIdAndCouponIdAndOriginTypeAndOriginId(
-//                userId, couponId, originType, originId)).thenReturn(false);
-//
-//        CouponStore result = couponStoreService.issueCommonCoupon(request);
-//
-//        assertNotNull(result);
-//        assertEquals(originType, result.getOriginType());
-//        assertEquals(originId, result.getOriginId());
-//        assertEquals(CouponStatus.READY, result.getStatus());
-//        verify(couponStoreRepository).save(any(CouponStore.class));
-//    }
-//
-//    @Test
-//    void issueCoupon_withOriginId_duplicate_throwsDuplicateCouponException() {
-//        Long userId = 1L;
-//        Long couponId = 100L;
-//        OriginType originType = OriginType.BOOK;
-//        Long originId = 200L;
-//        var request = new CouponIssueRequest(couponId, originType, originId);
-//
-//        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-//        when(couponRepository.findById(couponId)).thenReturn(Optional.of(coupon));
-//        when(couponStoreRepository.existsByUserIdAndCouponIdAndOriginTypeAndOriginId(
-//                userId, couponId, originType, originId)).thenReturn(true);
-//
-//        assertThrows(DuplicateCouponException.class,
-//                () -> couponStoreService.issueCoupon(request, 1L));
-//        verify(couponStoreRepository, never()).save(any());
-//    }
-//
-//    @Test
-//    void issueCoupon_withoutOriginId_succeeds() {
-//        Long userId = 1L;
-//        Long couponId = 101L;
-//        OriginType originType = OriginType.WELCOME;
-//        var request = new CommonCouponIssueRequest(userId, couponId, originType, null);
-//
-//        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-//        when(couponRepository.findById(couponId)).thenReturn(Optional.of(coupon));
-//        when(couponStoreRepository.existsByUserIdAndOriginType(userId, originType)).thenReturn(false);
-//
-//        CouponStore result = couponStoreService.issueCommonCoupon(request);
-//
-//        assertNotNull(result);
-//        assertEquals(originType, result.getOriginType());
-//        assertNull(result.getOriginId());
-//        assertEquals(CouponStatus.READY, result.getStatus());
-//        verify(couponStoreRepository).save(any(CouponStore.class));
-//    }
-//
-//    @Test
-//    void issueCoupon_withoutOriginId_duplicate_throwsDuplicateCouponException() {
-//        Long userId = 1L;
-//        Long couponId = 102L;
-//        OriginType originType = OriginType.WELCOME;
-//        var request = new CommonCouponIssueRequest(userId, couponId, originType, null);
-//
-//        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-//        when(couponRepository.findById(couponId)).thenReturn(Optional.of(coupon));
-//        when(couponStoreRepository.existsByUserIdAndOriginType(userId, originType)).thenReturn(true);
-//
-//        assertThrows(DuplicateCouponException.class,
-//                () -> couponStoreService.issueCommonCoupon(request));
-//        verify(couponStoreRepository, never()).save(any());
-//    }
-//
-//    @Test
-//    void issueCoupon_userNotFound_throwsUserNotFoundException() {
-//        Long userId = 9999L;
-//        Long couponId = 100L;
-//        var request = new CouponIssueRequest(couponId, OriginType.BOOK, 200L);
-//
-//        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-//
-//        assertThrows(UserNotFoundException.class,
-//                () -> couponStoreService.issueCoupon(request, userId));
-//        verify(couponRepository, never()).findById(any());
-//        verify(couponStoreRepository, never()).save(any());
-//    }
-//
-//    @Test
-//    void issueCoupon_couponNotFound_throwsCouponNotFoundException() {
-//        Long userId = 1L;
-//        Long couponId = 9999L;
-//        var request = new CouponIssueRequest(couponId, OriginType.BOOK, 200L);
-//
-//        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-//        when(couponRepository.findById(couponId)).thenReturn(Optional.empty());
-//
-//        assertThrows(CouponNotFoundException.class,
-//                () -> couponStoreService.issueCoupon(request, userId));
-//        verify(couponStoreRepository, never()).save(any());
-//    }
-//
-//    // ====================================
-//    // getStoresByUserId(), getStoresByCouponId(),
-//    // getUnusedStoresByUserId() 테스트
-//    // ====================================
-//
-//    @Test
-//    void getStoresByUserId_returnsList() {
-//        Long userId = 1L;
-//        var sampleStore = CouponStore.builder()
-//                .id(1L)
-//                .user(user)
-//                .coupon(coupon)
-//                .originType(OriginType.WELCOME)
-//                .status(CouponStatus.READY)
-//                .issuedAt(LocalDateTime.now())
-//                .build();
-//        var stores = List.of(sampleStore);
-//
-//        when(couponStoreRepository.findByUserId(userId)).thenReturn(stores);
-//
-//        var result = couponStoreService.getStoresByUserId(userId);
-//
-//        assertEquals(1, result.size());
-//        assertEquals(stores, result);
-//    }
-//
-//    @Test
-//    void getStoresByCouponId_returnsList() {
-//        Long couponId = 100L;
-//        var sampleStore = CouponStore.builder()
-//                .id(2L)
-//                .user(user)
-//                .coupon(coupon)
-//                .originType(OriginType.BIRTHDAY)
-//                .status(CouponStatus.READY)
-//                .issuedAt(LocalDateTime.now())
-//                .build();
-//        var stores = List.of(sampleStore);
-//
-//        when(couponStoreRepository.findByCouponId(couponId)).thenReturn(stores);
-//
-//        var result = couponStoreService.getStoresByCouponId(couponId);
-//
-//        assertEquals(1, result.size());
-//        assertEquals(stores, result);
-//    }
-//
-//    @Test
-//    void getUnusedStoresByUserId_returnsOnlyReady() {
-//        Long userId = 1L;
-//        var store1 = CouponStore.builder()
-//                .id(3L)
-//                .user(user)
-//                .coupon(coupon)
-//                .originType(OriginType.WELCOME)
-//                .status(CouponStatus.READY)
-//                .issuedAt(LocalDateTime.now())
-//                .build();
-//        var stores = List.of(store1);
-//
-//        when(couponStoreRepository.findByUserIdAndStatus(userId, CouponStatus.READY)).thenReturn(stores);
-//
-//        var result = couponStoreService.getUnusedStoresByUserId(userId);
-//
-//        assertEquals(1, result.size());
-//        assertEquals(stores, result);
-//    }
-//
-//    // ===========================
-//    // updateStore() 테스트
-//    // ===========================
-//
-//    @Test
-//    void updateStore_success() {
-//        Long storeId = 1L;
-//        var existingStore = CouponStore.builder()
-//                .id(storeId)
-//                .user(user)
-//                .coupon(coupon)
-//                .originType(OriginType.WELCOME)
-//                .status(CouponStatus.READY)
-//                .issuedAt(LocalDateTime.now())
-//                .build();
-//        when(couponStoreRepository.findById(storeId)).thenReturn(Optional.of(existingStore));
-//
-//        CouponStoreUpdateRequest updateRequest = new CouponStoreUpdateRequest(CouponStatus.USED, LocalDateTime.now());
-//
-//        var updated = couponStoreService.updateStore(storeId, updateRequest);
-//
-//        assertEquals(CouponStatus.USED, updated.getStatus());
-//        assertNotNull(updated.getUsedAt());
-//    }
-//
-//    @Test
-//    void updateStore_notFound_throwsCouponStoreNotFoundException() {
-//        Long storeId = 999L;
-//        when(couponStoreRepository.findById(storeId)).thenReturn(Optional.empty());
-//
-//        CouponStoreUpdateRequest updateRequest = new CouponStoreUpdateRequest(CouponStatus.USED, LocalDateTime.now());
-//
-//        assertThrows(CouponStoreNotFoundException.class,
-//                () -> couponStoreService.updateStore(storeId, updateRequest));
-//    }
-//
-//    // ===========================
-//    // deleteStore() 테스트
-//    // ===========================
-//
-//    @Test
-//    void deleteStore_success() {
-//        Long storeId = 1L;
-//        doNothing().when(couponStoreRepository).deleteById(storeId);
-//
-//        assertDoesNotThrow(() -> couponStoreService.deleteStore(storeId));
-//        verify(couponStoreRepository).deleteById(storeId);
-//    }
-//
-//    @Test
-//    void deleteStore_notFound_throwsCouponStoreNotFoundException() {
-//        Long storeId = 999L;
-//        doThrow(new EmptyResultDataAccessException(1))
-//                .when(couponStoreRepository).deleteById(storeId);
-//
-//        assertThrows(CouponStoreNotFoundException.class,
-//                () -> couponStoreService.deleteStore(storeId));
-//    }
-//
-//    // =========================================
-//    // getApplicableCouponStores() 간단 검증
-//    // =========================================
-//
-//    @Test
-//    void getApplicableCouponStores_filtersByDateAndCombinesOrigins() {
-//        // 1) BOOK 기반 쿠폰 IDs
-//        List<Long> bookCouponIds = List.of(100L);
-//        when(bookCouponRepository.findIdsByBookId(BOOK_ID)).thenReturn(bookCouponIds);
-//
-//        // 1a) BOOK origin: valid vs expired
-//        CouponPolicy validPolicy = mock(CouponPolicy.class);
-//        when(validPolicy.getDiscountType()).thenReturn(DiscountType.RATE);
-//        when(validPolicy.getDiscountValue()).thenReturn(null);
-//        when(validPolicy.getDiscountPercentage()).thenReturn(15);
-//        when(validPolicy.getMaximumDiscountAmount()).thenReturn(500);
-//
-//        Coupon validCoupon = mock(Coupon.class);
-//        when(validCoupon.getId()).thenReturn(1000L);
-//        when(validCoupon.getName()).thenReturn("BookCoupon");
-//        when(validCoupon.getIssuableFrom()).thenReturn(now.minusHours(1));
-//        when(validCoupon.getExpiresAt()).thenReturn(now.plusDays(1));
-//        when(validCoupon.getCouponPolicy()).thenReturn(validPolicy);
-//
-//        Coupon expiredCoupon = mock(Coupon.class);
-//        when(expiredCoupon.getIssuableFrom()).thenReturn(now.minusDays(2));
-//        when(expiredCoupon.getExpiresAt()).thenReturn(now.minusDays(1));
-//
-//        CouponStore validStore = CouponStore.builder()
-//                .id(1L)
-//                .coupon(validCoupon)
-//                .originType(OriginType.BOOK)
-//                .status(CouponStatus.READY)
-//                .build();
-//
-//        CouponStore expiredStore = CouponStore.builder()
-//                .id(2L)
-//                .coupon(expiredCoupon)
-//                .originType(OriginType.BOOK)
-//                .status(CouponStatus.READY)
-//                .build();
-//
-//        when(couponStoreRepository.findWithCouponByUserAndOriginAndStatus(
-//                USER_ID, OriginType.BOOK, bookCouponIds, CouponStatus.READY))
-//                .thenReturn(List.of(validStore, expiredStore));
-//
-//        // 2) CATEGORY 기반
-//        Book book = mock(Book.class);
-//        when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
-//        BookCategory bc = mock(BookCategory.class);
-//        Category cat = mock(Category.class);
-//        when(bc.getCategory()).thenReturn(cat);
-//        when(cat.getId()).thenReturn(5L);
-//        when(book.getBookCategories()).thenReturn(List.of(bc));
-//        when(categoryRepository.findAllAncestors(5L)).thenReturn(List.of());
-//        when(categoryCouponService.getCategoryCouponsWithFetch(Set.of(5L)))
-//                .thenReturn(List.of());
-//        when(couponStoreRepository.findWithCouponByUserAndOriginAndStatus(
-//                USER_ID, OriginType.CATEGORY, List.of(), CouponStatus.READY))
-//                .thenReturn(List.of());
-//
-//        // 3) WELCOME
-//        when(couponStoreRepository.findWithCouponByUserAndOriginAndStatus(
-//                USER_ID, OriginType.WELCOME, CouponStatus.READY))
-//                .thenReturn(List.of());
-//
-//        // 4) BIRTHDAY
-//        when(couponStoreRepository.findWithCouponByUserAndOriginAndStatus(
-//                USER_ID, OriginType.BIRTHDAY, CouponStatus.READY))
-//                .thenReturn(List.of());
-//
-//        // 실행
-//        List<CouponStoreDto> dtos = couponStoreService.getApplicableCouponStores(USER_ID, BOOK_ID);
-//
-//        // 검증: validStore 하나만 매핑
-//        assertEquals(1, dtos.size());
-//        CouponStoreDto dto = dtos.get(0);
-//        assertEquals(validStore.getId(), dto.storeId());
-//        assertEquals(validCoupon.getId(), dto.couponId());
-//        assertEquals("BookCoupon", dto.couponName());
-//        assertEquals(CouponStatus.READY, dto.status());
-//        assertEquals(DiscountType.RATE, dto.discountType());
-//        assertEquals(15, dto.discountPercentage().intValue());
-//        assertEquals(500, dto.maximumDiscountAmount().intValue());
-//    }
-//}
+package shop.ink3.api.coupon.store.service;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import shop.ink3.api.book.book.repository.BookRepository;
+import shop.ink3.api.book.bookcategory.repository.BookCategoryRepository;
+import shop.ink3.api.book.category.repository.CategoryRepository;
+import shop.ink3.api.book.category.service.CategoryService;
+import shop.ink3.api.coupon.bookCoupon.entity.BookCouponRepository;
+import shop.ink3.api.coupon.categoryCoupon.entity.CategoryCouponService;
+import shop.ink3.api.coupon.coupon.entity.Coupon;
+import shop.ink3.api.coupon.coupon.exception.CouponNotFoundException;
+import shop.ink3.api.coupon.coupon.repository.CouponRepository;
+import shop.ink3.api.coupon.store.dto.CouponIssueRequest;
+import shop.ink3.api.coupon.store.entity.CouponStatus;
+import shop.ink3.api.coupon.store.entity.CouponStore;
+import shop.ink3.api.coupon.store.entity.OriginType;
+import shop.ink3.api.coupon.store.exception.DuplicateCouponException;
+import shop.ink3.api.coupon.store.repository.CouponStoreRepository;
+import shop.ink3.api.user.user.entity.User;
+import shop.ink3.api.coupon.policy.entity.CouponPolicy;
+import shop.ink3.api.user.user.exception.UserNotFoundException;
+import shop.ink3.api.user.user.repository.UserRepository;
+
+@ExtendWith(MockitoExtension.class)
+class CouponStoreServiceTest {
+
+    @InjectMocks
+    private CouponStoreService couponStoreService;
+
+    @Mock private CouponRepository couponRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private BookCouponRepository bookCouponRepository;
+    @Mock private CategoryCouponService categoryCouponService;
+    @Mock private CouponStoreRepository couponStoreRepository;
+    @Mock private BookRepository bookRepository;
+    @Mock private CategoryRepository categoryRepository;
+    @Mock private BookCategoryRepository bookCategoryRepository;
+    @Mock private CategoryService categoryService;
+
+    private User user;
+    private Coupon coupon;
+
+    @BeforeEach
+    void setup() {
+        user = User.builder().id(1L).build();
+        coupon = Coupon.builder()
+            .id(100L)
+            .name("테스트쿠폰")
+            .couponPolicy(CouponPolicy.builder().build())
+            .issuableFrom(LocalDateTime.now().minusDays(1))
+            .expiresAt(LocalDateTime.now().plusDays(1))
+            .build();
+    }
+
+    @Nested
+    @DisplayName("issueCoupon")
+    class IssueCouponTest {
+
+        @Test
+        @DisplayName("정상적으로 쿠폰 발급")
+        void issueCoupon_success() {
+            CouponIssueRequest request = new CouponIssueRequest(coupon.getId(), OriginType.WELCOME, null);
+            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+            when(couponRepository.findById(coupon.getId())).thenReturn(Optional.of(coupon));
+            when(couponStoreRepository.existsByUserIdAndOriginType(user.getId(), request.originType())).thenReturn(false);
+            when(userRepository.getReferenceById(user.getId())).thenReturn(user);
+            when(couponRepository.getReferenceById(coupon.getId())).thenReturn(coupon);
+
+            CouponStore result = couponStoreService.issueCoupon(request, user.getId());
+
+            assertThat(result.getUser()).isEqualTo(user);
+            assertThat(result.getCoupon()).isEqualTo(coupon);
+            assertThat(result.getOriginType()).isEqualTo(OriginType.WELCOME);
+            assertThat(result.getStatus()).isEqualTo(CouponStatus.READY);
+        }
+
+        @Test
+        @DisplayName("회원이 존재하지 않으면 예외 발생")
+        void userNotFound() {
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> couponStoreService.issueCoupon(
+                new CouponIssueRequest(100L, OriginType.WELCOME, null), 1L))
+                .isInstanceOf(UserNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("쿠폰이 존재하지 않으면 예외 발생")
+        void couponNotFound() {
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(couponRepository.findById(100L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> couponStoreService.issueCoupon(
+                new CouponIssueRequest(100L, OriginType.WELCOME, null), 1L))
+                .isInstanceOf(CouponNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("중복 발급이면 예외 발생 (originId 없음)")
+        void duplicateCouponWithoutOriginId() {
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(couponRepository.findById(100L)).thenReturn(Optional.of(coupon));
+            when(couponStoreRepository.existsByUserIdAndOriginType(1L, OriginType.WELCOME)).thenReturn(true);
+
+            assertThatThrownBy(() -> couponStoreService.issueCoupon(
+                new CouponIssueRequest(100L, OriginType.WELCOME, null), 1L))
+                .isInstanceOf(DuplicateCouponException.class);
+        }
+
+        @Test
+        @DisplayName("중복 발급이면 예외 발생 (originId 존재)")
+        void duplicateCouponWithOriginId() {
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(couponRepository.findById(100L)).thenReturn(Optional.of(coupon));
+            when(couponStoreRepository.existsByUserIdAndCouponIdAndOriginTypeAndOriginId(
+                1L, 100L, OriginType.BOOK, 99L)).thenReturn(true);
+
+            assertThatThrownBy(() -> couponStoreService.issueCoupon(
+                new CouponIssueRequest(100L, OriginType.BOOK, 99L), 1L))
+                .isInstanceOf(DuplicateCouponException.class);
+        }
+    }
+}

@@ -2,6 +2,8 @@ package shop.ink3.api.payment.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,12 +14,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import shop.ink3.api.order.order.dto.OrderResponse;
+import shop.ink3.api.order.order.entity.Order;
+import shop.ink3.api.order.order.entity.OrderStatus;
+import shop.ink3.api.order.orderPoint.entity.OrderPoint;
 import shop.ink3.api.payment.dto.*;
+import shop.ink3.api.payment.entity.Payment;
 import shop.ink3.api.payment.entity.PaymentType;
+import shop.ink3.api.payment.paymentUtil.processor.PaymentProcessor;
 import shop.ink3.api.payment.service.PaymentService;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -63,6 +72,25 @@ class PaymentControllerTest {
                 .andExpect(jsonPath("$.data.paymentAmount").value(10000));
     }
 
+    @DisplayName("결제 승인 요청 - POINT 타입일 경우 paymentKey 없어도 성공")
+    @Test
+    void confirmPayment_pointTypeWithoutPaymentKey() throws Exception {
+        PaymentConfirmRequest request = new PaymentConfirmRequest(
+            orderId, userId, null, "orderUUID-1", 0, 0, 10000, PaymentType.POINT);
+
+        String approveResponse = "mock-approve-json";
+        PaymentResponse response = new PaymentResponse(1L, orderId, null, 0, 0, 10000, PaymentType.POINT,
+            LocalDateTime.now(), LocalDateTime.now());
+
+        when(paymentService.callPaymentAPI(any())).thenReturn(approveResponse);
+        when(paymentService.createPayment(any(), any())).thenReturn(response);
+
+        mockMvc.perform(post("/payments/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk());
+    }
+
     @Test
     @DisplayName("결제 승인 요청 - 실패")
     void confirmPayment_실패() throws Exception {
@@ -92,6 +120,14 @@ class PaymentControllerTest {
         verify(paymentService).failPayment(orderId, userId);
     }
 
+    @DisplayName("결제 실패 요청 - userId 누락")
+    @Test
+    void failPayment_noUserId() throws Exception {
+        mockMvc.perform(post("/payments/{orderId}/fail", orderId))
+            .andExpect(status().isInternalServerError());
+    }
+
+
     @Test
     @DisplayName("결제 취소 요청 - 성공")
     void cancelPayment_success() throws Exception {
@@ -104,6 +140,18 @@ class PaymentControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(paymentService).cancelPayment(orderId, userId, cancelRequest);
+    }
+
+    @DisplayName("결제 취소 요청 - 잘못된 JSON 요청")
+    @Test
+    void cancelPayment_invalidRequestBody() throws Exception {
+        String invalidJson = "{\"orderId\":1,\"reason\":\"변심\"}";
+
+        mockMvc.perform(post("/payments/{orderId}/cancel", orderId)
+                .header("X-User-Id", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidJson))
+            .andExpect(status().isNoContent());
     }
 
     @Test
