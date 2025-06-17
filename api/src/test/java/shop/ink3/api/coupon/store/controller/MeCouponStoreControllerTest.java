@@ -21,7 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import shop.ink3.api.coupon.coupon.entity.Coupon;
 import shop.ink3.api.coupon.policy.entity.CouponPolicy;
 import shop.ink3.api.coupon.policy.entity.DiscountType;
+import shop.ink3.api.coupon.store.dto.CouponIssueRequest;
 import shop.ink3.api.coupon.store.dto.CouponStoreDto;
+import shop.ink3.api.coupon.store.dto.CouponStoreUpdateRequest;
 import shop.ink3.api.coupon.store.entity.*;
 import shop.ink3.api.coupon.store.service.CouponStoreService;
 import shop.ink3.api.user.user.entity.User;
@@ -59,8 +61,31 @@ class MeCouponStoreControllerTest {
         coupon = Coupon.builder()
             .id(1L)
             .name("테스트 쿠폰")
-            .couponPolicy(couponPolicy) // ✅ 필수
+            .couponPolicy(couponPolicy)
             .build();
+    }
+
+    @Test
+    @DisplayName("쿠폰 발급 성공")
+    void issueCouponTest() throws Exception {
+        Long userId = user.getId();
+
+        CouponStore store = CouponStore.builder()
+            .id(1L)
+            .user(user)
+            .coupon(coupon)
+            .originType(OriginType.BIRTHDAY)
+            .status(CouponStatus.READY)
+            .build();
+
+        given(couponStoreService.issueCoupon(any(), eq(userId))).willReturn(store);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/me/users/coupon-stores")
+                .header("X-User-Id", userId)
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(new CouponIssueRequest(1L, OriginType.BIRTHDAY, null))))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.storeId").value(1));
     }
 
     @Test
@@ -88,6 +113,42 @@ class MeCouponStoreControllerTest {
     }
 
     @Test
+    @DisplayName("사용자 미사용 쿠폰 목록 조회")
+    void getUnusedStoresTest() throws Exception {
+        given(couponStoreService.getUnusedStoresPagingByUserId(eq(user.getId()), any()))
+            .willReturn(new PageImpl<>(List.of(CouponStore.builder().id(1L).user(user).coupon(coupon).build())));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/me/users/coupon-stores/status-unused")
+                .header("X-User-Id", user.getId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].storeId").value(1));
+    }
+
+    @Test
+    @DisplayName("사용자 사용/만료 쿠폰 목록 조회")
+    void getUsedExpiredStoresTest() throws Exception {
+        given(couponStoreService.getUsedOrExpiredStoresPagingByUserId(eq(user.getId()), any()))
+            .willReturn(new PageImpl<>(List.of(CouponStore.builder().id(2L).user(user).coupon(coupon).build())));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/me/users/coupon-stores/status-used")
+                .header("X-User-Id", user.getId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].storeId").value(2));
+    }
+
+    @Test
+    @DisplayName("특정 쿠폰 ID로 발급된 쿠폰스토어 목록 조회")
+    void getStoresByCouponIdTest() throws Exception {
+        given(couponStoreService.getStoresByCouponId(1L))
+            .willReturn(List.of(CouponStore.builder().id(3L).coupon(coupon).user(user).build()));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/me/coupons/1/coupon-stores"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].storeId").value(3));
+    }
+
+
+    @Test
     @DisplayName("사용자의 쿠폰 목록 페이징 조회")
     void getStoresByUserIdTest() throws Exception {
         Long userId = this.user.getId();
@@ -106,5 +167,28 @@ class MeCouponStoreControllerTest {
                 .header("X-User-Id", userId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("쿠폰 사용 여부 업데이트")
+    void updateStoreTest() throws Exception {
+        given(couponStoreService.updateStore(eq(1L), any()))
+            .willReturn(CouponStore.builder().id(1L).user(user).coupon(coupon).status(CouponStatus.USED).build());
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/me/coupon-stores/1")
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(new CouponStoreUpdateRequest(CouponStatus.USED, LocalDateTime.now()))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.storeId").value(1));
+    }
+
+    @Test
+    @DisplayName("쿠폰 발급 삭제")
+    void deleteStoreTest() throws Exception {
+        willDoNothing().given(couponStoreService).deleteStore(1L);
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/me/coupon-stores/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data").doesNotExist());
     }
 }

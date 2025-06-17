@@ -1,11 +1,12 @@
 package shop.ink3.api.coupon.categoryCoupon.entity;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.Collection;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor

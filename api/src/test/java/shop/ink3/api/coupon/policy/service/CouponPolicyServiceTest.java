@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
@@ -13,7 +14,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
+import shop.ink3.api.common.dto.PageResponse;
 import shop.ink3.api.coupon.policy.dto.PolicyCreateRequest;
 import shop.ink3.api.coupon.policy.dto.PolicyResponse;
 import shop.ink3.api.coupon.policy.dto.PolicyUpdateRequest;
@@ -31,6 +36,43 @@ class CouponPolicyServiceTest {
 
     @InjectMocks
     private PolicyService policyService;
+
+    @Test
+    void getPolicy_success() {
+        CouponPolicy policy1 = CouponPolicy.builder()
+            .id(1L)
+            .name("POLICY1")
+            .discountType(DiscountType.RATE)
+            .discountPercentage(10)
+            .discountValue(0)
+            .minimumOrderAmount(1000)
+            .maximumDiscountAmount(3000)
+            .createdAt(LocalDateTime.now())
+            .build();
+
+        CouponPolicy policy2 = CouponPolicy.builder()
+            .id(2L)
+            .name("POLICY2")
+            .discountType(DiscountType.FIXED)
+            .discountPercentage(0)
+            .discountValue(2000)
+            .minimumOrderAmount(5000)
+            .maximumDiscountAmount(2000)
+            .createdAt(LocalDateTime.now())
+            .build();
+
+        Page<CouponPolicy> policyPage = new PageImpl<>(List.of(policy1, policy2), PageRequest.of(0, 10), 2);
+
+        when(policyRepository.findAll(any(PageRequest.class))).thenReturn(policyPage);
+
+        // when
+        PageResponse<PolicyResponse> result = policyService.getPolicy(PageRequest.of(0, 10));
+
+        // then
+        Assertions.assertEquals(2, result.totalElements());
+        Assertions.assertEquals("POLICY1", result.content().get(0).policyName());
+        Assertions.assertEquals("POLICY2", result.content().get(1).policyName());
+    }
 
     @Test
     void getPolicyById_success() {

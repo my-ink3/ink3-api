@@ -2,15 +2,22 @@ package shop.ink3.api.coupon.policy.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import shop.ink3.api.common.dto.PageResponse;
 import shop.ink3.api.coupon.policy.dto.PolicyCreateRequest;
 import shop.ink3.api.coupon.policy.dto.PolicyResponse;
 import shop.ink3.api.coupon.policy.dto.PolicyUpdateRequest;
@@ -34,20 +41,40 @@ class CouponPolicyControllerTest {
     // PolicyService를 Mockito로 목 생성
     private PolicyService policyService;
 
+
     @BeforeEach
     void setUp() {
-        // Mockito.mock을 사용해 목 객체 생성
         policyService = Mockito.mock(PolicyService.class);
-
-        // 컨트롤러 인스턴스를 직접 생성하여 목을 주입
         PolicyController controller = new PolicyController(policyService);
 
-        // standaloneSetup으로 MockMvc 설정
-        mockMvc = MockMvcBuilders
-                .standaloneSetup(controller)
-                .build();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+            .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+            .build();
 
         objectMapper = new ObjectMapper();
+    }
+
+    @Test
+    void getAllPolicies_success() throws Exception {
+        // 1) Sample 응답 데이터
+        PolicyResponse sample1 = new PolicyResponse(1L, "Policy1", 10000, DiscountType.FIXED, 3000, 0, 5000, LocalDateTime.now());
+        PolicyResponse sample2 = new PolicyResponse(2L, "Policy2", 15000, DiscountType.RATE, 0, 15, 3000, LocalDateTime.now());
+
+        Page<PolicyResponse> policyPage = new PageImpl<>(List.of(sample1, sample2), PageRequest.of(0, 10), 2);
+        PageResponse<PolicyResponse> pageResponse = PageResponse.from(policyPage);
+
+        // 2) Mock 설정
+        when(policyService.getPolicy(any(PageRequest.class))).thenReturn(pageResponse);
+
+        // 3) 요청 및 검증
+        mockMvc.perform(get("/policies?page=0&size=10"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+            .andExpect(jsonPath("$.data.totalElements").value(2))
+            .andExpect(jsonPath("$.data.content[0].policyId").value(1))
+            .andExpect(jsonPath("$.data.content[1].policyName").value("Policy2"));
     }
 
     @Test
