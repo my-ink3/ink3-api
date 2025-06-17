@@ -45,7 +45,7 @@ public class CartService {
     private final CartRepository cartRepository;
 
     @Value("${minio.book-bucket}")
-    private String bookBucket;
+    private String bucket;
 
     public CartResponse addCartItem(CartRequest request) {
         User user = userRepository.findById(request.userId())
@@ -88,7 +88,7 @@ public class CartService {
         List<Cart> carts = cartRepository.findByUserId(userId);
         return carts.stream()
             .map(cart -> {
-                String presignedUrl = minioService.getPresignedUrl(cart.getBook().getThumbnailUrl(), bookBucket);
+                String presignedUrl = getThumbnailUrl(cart.getBook());
                 return CartResponse.from(cart, presignedUrl);
             })
             .toList();
@@ -99,7 +99,7 @@ public class CartService {
         List<Cart> carts = cartRepository.findByUserId(userId);
         return carts.stream()
             .map(cart -> {
-                String presignedUrl = minioService.getPresignedUrl(cart.getBook().getThumbnailUrl(), bookBucket);
+                String presignedUrl = getThumbnailUrl(cart.getBook());
                 List<CouponStoreDto> coupons = couponStoreService.getApplicableCouponStores(userId, cart.getBook().getId());
                 return CartCouponResponse.from(cart, coupons, presignedUrl);
             })
@@ -111,7 +111,7 @@ public class CartService {
         List<Cart> carts = cartRepository.findAllByUserIdAndIdIn(userId, cartIds);
         return carts.stream()
             .map(cart -> {
-                String presignedUrl = minioService.getPresignedUrl(cart.getBook().getThumbnailUrl(), bookBucket);
+                String presignedUrl = getThumbnailUrl(cart.getBook());
                 List<CouponStoreDto> coupons = couponStoreService.getApplicableCouponStores(userId, cart.getBook().getId());
                 return CartCouponResponse.from(cart, coupons, presignedUrl);
             })
@@ -121,7 +121,12 @@ public class CartService {
     // @Transactional(readOnly = true)
     // public List<CartResponse> getCartItems(Long userId) {
     //     List<Cart> carts = cartRepository.findByUserId(userId);
-    //     return carts.stream().map(CartResponse::from).toList();
+    //     return carts.stream()
+    //         .map(cart -> {
+    //             String presignedUrl = getThumbnailUrl(cart.getBook());
+    //             return CartResponse.from(cart, presignedUrl);
+    //         })
+    //         .toList();
     // }
 
     @Transactional(readOnly = true)
@@ -138,7 +143,10 @@ public class CartService {
 
         List<Cart> carts = cartRepository.findByUserId(userId);
         List<CartResponse> responses = carts.stream()
-            .map(CartResponse::from)
+            .map(cart -> {
+                String presignedUrl = getThumbnailUrl(cart.getBook());
+                return CartResponse.from(cart, presignedUrl);
+            })
             .toList();
 
         for (int i = 0; i < carts.size(); i++) {
@@ -177,4 +185,8 @@ public class CartService {
         redisTemplate.expire(key, Duration.ofDays(3));
     }
 
+    private String getThumbnailUrl(Book book) {
+        return book.getThumbnailUrl().startsWith("https") ? book.getThumbnailUrl()
+            : minioService.getPresignedUrl(book.getThumbnailUrl(), bucket);
+    }
 }

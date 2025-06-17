@@ -46,7 +46,7 @@ public class MeReviewController {
         @RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
         ReviewRequest reviewRequest = new ReviewRequest(userId, orderBookId, title, content, rating);
-        return ResponseEntity.status(HttpStatus.OK)
+        return ResponseEntity.status(HttpStatus.CREATED)
             .body(CommonResponse.create(reviewService.addReview(reviewRequest, images)));
     }
 
