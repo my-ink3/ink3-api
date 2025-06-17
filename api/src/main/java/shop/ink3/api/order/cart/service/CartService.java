@@ -65,7 +65,7 @@ public class CartService {
                     .build();
         }
         Cart savedCart = cartRepository.save(cart);
-        CartResponse response = CartResponse.from(savedCart);
+        CartResponse response = CartResponse.from(savedCart, getThumbnailUrl(savedCart.getBook()));
         cacheCart(savedCart, response);
 
         return response;
@@ -77,7 +77,7 @@ public class CartService {
         cart.updateQuantity(request.quantity());
         cartRepository.save(cart);
 
-        CartResponse response = CartResponse.from(cart);
+        CartResponse response = CartResponse.from(cart, getThumbnailUrl(cart.getBook()));
         cacheCart(cart, response);
 
         return response;

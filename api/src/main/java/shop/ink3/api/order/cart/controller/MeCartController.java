@@ -44,9 +44,7 @@ public class MeCartController {
         @RequestHeader("X-User-Id") Long userId) {
         for (MeCartRequest item : guestItems) {
             CartRequest request = new CartRequest(userId, item.bookId(), item.quantity());
-            log.error("service 실행 전");
             cartService.addCartItem(request);
-            log.error("service 실행 후");
         }
         return ResponseEntity.ok().build();
     }
