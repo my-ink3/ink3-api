@@ -338,7 +338,7 @@ public class BookService {
 
         bookRepository.save(book); // 먼저 저장해서 ID 확보
 
-        List<List<CategoryFlatDto>> categories = createCategoryHierarchy(dto.categoryName());
+        List<List<CategoryFlatDto>> categories = categoryService.createCategoryHierarchy(dto.categoryName());
         for (List<CategoryFlatDto> path : categories) {
             CategoryFlatDto selectedCategory = path.getLast();
             addCategoryToBook(book.getId(), selectedCategory.id());
@@ -391,25 +391,6 @@ public class BookService {
             result.add(new BookAuthorDto(name, role));
         }
         return result;
-    }
-
-    public List<List<CategoryFlatDto>> createCategoryHierarchy(String categoryPath) {
-        List<Category> categories = new ArrayList<>();
-        String[] categoryNames = categoryPath.split(">");
-
-        Arrays.stream(categoryNames)
-                .map(String::strip)
-                .distinct()
-                .map(c -> categoryRepository.findByName(c)
-                        .orElseGet(() -> categoryRepository.save(Category.builder().name(c).path("").build())))
-                .forEach(categories::add);
-
-        for (int i = 1; i < categories.size(); i++) {
-            categories.get(i).updateParent(categories.get(i - 1));
-            categories.get(i).updatePath(categories.get(i - 1).getPath() + "/" + categories.get(i - 1).getId());
-        }
-
-        return List.of(categories.stream().map(CategoryFlatDto::from).toList());
     }
 
     private Page<BookPreviewResponse> mapToBookPreviewResponse(Page<Book> books) {

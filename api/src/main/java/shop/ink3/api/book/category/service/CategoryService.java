@@ -106,6 +106,26 @@ public class CategoryService {
     }
 
     @CacheEvict(value = "categories", allEntries = true)
+    public List<List<CategoryFlatDto>> createCategoryHierarchy(String categoryPath) {
+        List<Category> categories = new ArrayList<>();
+        String[] categoryNames = categoryPath.split(">");
+
+        Arrays.stream(categoryNames)
+                .map(String::strip)
+                .distinct()
+                .map(c -> categoryRepository.findByName(c)
+                        .orElseGet(() -> categoryRepository.save(Category.builder().name(c).path("").build())))
+                .forEach(categories::add);
+
+        for (int i = 1; i < categories.size(); i++) {
+            categories.get(i).updateParent(categories.get(i - 1));
+            categories.get(i).updatePath(categories.get(i - 1).getPath() + "/" + categories.get(i - 1).getId());
+        }
+
+        return List.of(categories.stream().map(CategoryFlatDto::from).toList());
+    }
+
+    @CacheEvict(value = "categories", allEntries = true)
     public void updateCategoryName(long id, CategoryUpdateNameRequest request) {
         Category category = categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException(id));
         category.updateName(request.name());
