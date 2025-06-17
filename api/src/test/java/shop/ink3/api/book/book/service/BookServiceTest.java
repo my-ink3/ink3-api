@@ -17,11 +17,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
+
+import shop.ink3.api.book.book.dto.BookAuthorDto;
+import shop.ink3.api.book.book.dto.BookCreateRequest;
 import shop.ink3.api.book.book.dto.BookDetailResponse;
 import shop.ink3.api.book.book.dto.BookPreviewResponse;
 import shop.ink3.api.book.book.entity.Book;
 import shop.ink3.api.book.book.entity.BookStatus;
 import shop.ink3.api.book.book.enums.SortType;
+import shop.ink3.api.book.book.exception.BookNotFoundException;
+import shop.ink3.api.book.book.exception.DuplicateIsbnException;
 import shop.ink3.api.book.book.repository.BookRepository;
 import shop.ink3.api.book.bookauthor.repository.BookAuthorRepository;
 import shop.ink3.api.book.bookcategory.repository.BookCategoryRepository;
@@ -170,5 +176,58 @@ class BookServiceTest {
         assertThat(result.content().getFirst().title()).isEqualTo("책 제목");
         assertThat(result.content().getFirst().reviewCount()).isEqualTo(2L);
         assertThat(result.content().getFirst().likeCount()).isEqualTo(0L);
+    }
+
+    @Test
+    @DisplayName("관리자 도서 목록 조회 성공")
+    void getAdminBooksSuccess() {
+        Page<Book> page = new PageImpl<>(List.of(book));
+        when(bookRepository.findAll(any(Pageable.class))).thenReturn(page);
+
+        PageResponse<?> result = bookService.getAdminBooks(PageRequest.of(0, 10));
+
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().getFirst()).hasFieldOrPropertyWithValue("title", "책 제목");
+    }
+
+    @Test
+    @DisplayName("도서 등록 실패 - 중복 ISBN")
+    void createBookFail_duplicateIsbn() {
+        when(bookRepository.existsByIsbn("1234567890123")).thenReturn(true);
+
+        BookCreateRequest request = new BookCreateRequest(
+            "1234567890123", "제목", null, "설명",
+            LocalDate.now(), 10000, 9000, 10, BookStatus.AVAILABLE,
+            true, "출판사", List.of(1L), List.of(new BookAuthorDto("홍길동", "지은이")), List.of("태그")
+        );
+
+        MultipartFile dummyFile = null;
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+            DuplicateIsbnException.class,
+            () -> bookService.createBook(request, dummyFile)
+        );
+    }
+
+    @Test
+    @DisplayName("도서 상세 조회 실패 - 존재하지 않는 도서")
+    void getBookDetailFail_notFound() {
+        when(bookRepository.findById(999L)).thenReturn(java.util.Optional.empty());
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+            BookNotFoundException.class,
+            () -> bookService.getBookDetail(999L)
+        );
+    }
+
+    @Test
+    @DisplayName("도서 삭제 실패 - 존재하지 않는 도서")
+    void deleteBookFail_notFound() {
+        when(bookRepository.findById(999L)).thenReturn(java.util.Optional.empty());
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+            BookNotFoundException.class,
+            () -> bookService.deleteBook(999L)
+        );
     }
 }

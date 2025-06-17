@@ -3,7 +3,7 @@ package shop.ink3.api.book.book.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -17,12 +17,21 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import shop.ink3.api.book.book.dto.AdminBookResponse;
 import shop.ink3.api.book.book.dto.BookAuthorDto;
+import shop.ink3.api.book.book.dto.BookCreateRequest;
 import shop.ink3.api.book.book.dto.BookDetailResponse;
 import shop.ink3.api.book.book.dto.BookPreviewResponse;
+import shop.ink3.api.book.book.dto.BookUpdateRequest;
 import shop.ink3.api.book.book.entity.BookStatus;
 import shop.ink3.api.book.book.enums.SortType;
 import shop.ink3.api.book.book.service.BookService;
@@ -44,9 +53,14 @@ class BookControllerTest {
     private BookDetailResponse bookDetailResponse;
     private BookPreviewResponse bookPreviewResponse;
     private AdminBookResponse adminBookResponse;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
+        objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
         CategoryFlatDto category1 = new CategoryFlatDto(
                 1L, "국내도서", null, 0
         );
@@ -197,5 +211,115 @@ class BookControllerTest {
         mockMvc.perform(get("/books/recommend-all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].title").value("책 제목 (프리뷰)"));
+    }
+
+    @Test
+    @DisplayName("도서 상세 조회")
+    void getBookByIdWithParentCategory() throws Exception {
+        when(bookService.getBookDetail(1L)).thenReturn(bookDetailResponse);
+
+        mockMvc.perform(get("/books/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.title").value("책 제목 (상세)"));
+    }
+
+    @Test
+    @DisplayName("도서 등록")
+    void createBook() throws Exception {
+        String json = objectMapper.writeValueAsString(
+            new BookCreateRequest(
+                "9781234567890",
+                "테스트 도서 제목",
+                "목차 예시",
+                "도서 설명 예시입니다.",
+                LocalDate.of(2024, 1, 1),
+                15000,
+                12000,
+                100,
+                BookStatus.AVAILABLE,
+                true,
+                "출판사 예시",
+                List.of(1L, 2L),
+                List.of(new BookAuthorDto("홍길동", "저자")),
+                List.of("추천", "베스트셀러")
+            )
+        );
+
+        MockMultipartFile bookJson = new MockMultipartFile("book", "", "application/json", json.getBytes());
+        MockMultipartFile image = new MockMultipartFile("coverImage", "image.jpg", "image/jpeg", "image".getBytes());
+
+        when(bookService.createBook(any(), any())).thenReturn(bookDetailResponse);
+
+        mockMvc.perform(multipart("/books")
+                .file(bookJson)
+                .file(image)
+                .contentType(MediaType.MULTIPART_FORM_DATA))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.title").value("책 제목 (상세)"));
+    }
+
+    @Test
+    @DisplayName("도서 수정")
+    void updateBook() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        String json = objectMapper.writeValueAsString(
+            new BookUpdateRequest(
+                "9781234567890",
+                "수정된 도서 제목",
+                "수정된 목차입니다.",
+                "이것은 수정된 도서 설명입니다.",
+                LocalDate.of(2024, 6, 1),
+                18000,
+                15000,
+                50,
+                BookStatus.AVAILABLE,
+                false,
+                "https://example.com/updated-thumbnail.jpg",
+                "수정된 출판사",
+                List.of(2L, 3L),
+                List.of(new BookAuthorDto("이몽룡", "저자")),
+                List.of("리뷰많음", "한정판")
+            )
+        );
+
+        MockMultipartFile bookJson = new MockMultipartFile("book", "", "application/json", json.getBytes());
+        MockMultipartFile image = new MockMultipartFile("coverImage", "image.jpg", "image/jpeg", "image".getBytes());
+
+        when(bookService.updateBook(eq(1L), any(), any())).thenReturn(bookDetailResponse);
+
+        mockMvc.perform(multipart("/books/1")
+                .file(bookJson)
+                .file(image)
+                .with(request -> {
+                    request.setMethod("PUT");
+                    return request;
+                })
+                .contentType(MediaType.MULTIPART_FORM_DATA))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.title").value("책 제목 (상세)"));
+    }
+
+    @Test
+    @DisplayName("도서 삭제")
+    void deleteBook() throws Exception {
+        mockMvc.perform(delete("/books/1"))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("도서 조회수 증가")
+    void increaseViewCount() throws Exception {
+        mockMvc.perform(post("/books/1/view"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("도서 검색수 증가")
+    void increaseSearchCount() throws Exception {
+        mockMvc.perform(post("/books/1/search"))
+            .andExpect(status().isOk());
     }
 }
