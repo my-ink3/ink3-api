@@ -52,7 +52,6 @@ public class OrderBook {
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-    //TODO : 적용 쿠폰에 따라 할인 금액도 수정되어야함.
     public void update(OrderBookUpdateRequest request, Packaging packaging,CouponStore couponStore) {
         this.packaging = packaging;
         this.couponStore = couponStore;

@@ -1,6 +1,5 @@
 package shop.ink3.api.order.shipment.controller;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
@@ -9,7 +8,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -17,15 +15,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.inject.Inject;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.HttpStatus;
@@ -34,15 +28,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import shop.ink3.api.common.dto.PageResponse;
 import shop.ink3.api.order.order.entity.Order;
-import shop.ink3.api.order.shipment.dto.ShipmentCreateRequest;
 import shop.ink3.api.order.shipment.dto.ShipmentResponse;
 import shop.ink3.api.order.shipment.dto.ShipmentUpdateRequest;
 import shop.ink3.api.order.shipment.entity.Shipment;
 import shop.ink3.api.order.shipment.exception.ShipmentNotFoundException;
-import shop.ink3.api.order.shipment.repository.ShipmentRepository;
 import shop.ink3.api.order.shipment.service.ShipmentService;
-import shop.ink3.api.order.shippingPolicy.entity.ShippingPolicy;
-import shop.ink3.api.order.shippingPolicy.exception.ShippingPolicyNotFoundException;
 
 @WebMvcTest(ShipmentController.class)
 class ShipmentControllerTest {
