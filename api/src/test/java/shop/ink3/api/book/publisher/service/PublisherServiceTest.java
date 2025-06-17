@@ -103,6 +103,7 @@ class PublisherServiceTest {
     @Test
     void createPublisher() {
         PublisherCreateRequest request = new PublisherCreateRequest("testPublisher");
+        when(publisherRepository.existsByName("testPublisher")).thenReturn(false);
         when(publisherRepository.save(any(Publisher.class))).thenAnswer(inv -> inv.getArgument(0));
         PublisherResponse response = publisherService.createPublisher(request);
         Assertions.assertNotNull(response);
@@ -136,6 +137,18 @@ class PublisherServiceTest {
         PublisherUpdateRequest request = new PublisherUpdateRequest("newPublisher");
         when(publisherRepository.findById(1L)).thenThrow(new PublisherNotFoundException(1L));
         Assertions.assertThrows(PublisherNotFoundException.class, () -> publisherService.updatePublisher(1L, request));
+    }
+
+    @Test
+    void updatePublisherWithAlreadyExists() {
+        Publisher publisher = Publisher.builder()
+                .id(1L)
+                .name("oldPublisher")
+                .build();
+        PublisherUpdateRequest request = new PublisherUpdateRequest("newPublisher");
+        when(publisherRepository.findById(1L)).thenReturn(Optional.of(publisher));
+        when(publisherRepository.existsByName("newPublisher")).thenReturn(true);
+        Assertions.assertThrows(PublisherAlreadyExistsException.class, () -> publisherService.updatePublisher(1L, request));
     }
 
     @Test

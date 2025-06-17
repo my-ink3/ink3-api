@@ -1,6 +1,7 @@
 package shop.ink3.api.book.tag.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +27,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TagController.class)
@@ -62,8 +65,8 @@ class TagControllerTest {
         );
         Page<TagResponse> page = new PageImpl<>(
                 tagResponses,
-                PageRequest.of(0, 10),  // page = 0, size = 10
-                tagResponses.size()                         // totalElements = 2
+                PageRequest.of(0, 10),
+                tagResponses.size()
         );
         PageResponse<TagResponse> pageResponse = PageResponse.from(page);
 
@@ -115,6 +118,8 @@ class TagControllerTest {
                 .andExpect(jsonPath("$.data.name").value("java"));
     }
 
+
+
     @Test
     void getTagByName() throws Exception {
         TagResponse response = new TagResponse(1L, "java");
@@ -123,5 +128,17 @@ class TagControllerTest {
         mockMvc.perform(get("/tags/detail?name=java"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.name").value("java"));
+    }
+
+    @Test
+    void getTagWithoutIdOrName() throws Exception {
+        mockMvc.perform(get("/tags/detail"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.data").value(Matchers.nullValue()))
+                .andDo(print());
     }
 }

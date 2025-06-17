@@ -16,7 +16,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
-import shop.ink3.api.book.bookTag.entity.BookTag;
+import shop.ink3.api.book.booktag.entity.BookTag;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

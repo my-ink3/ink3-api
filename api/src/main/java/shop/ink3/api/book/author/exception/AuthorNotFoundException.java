@@ -6,7 +6,4 @@ public class AuthorNotFoundException extends NotFoundException {
   public AuthorNotFoundException(Long authorId) {
     super("Author not found. ID: %d".formatted(authorId));
   }
-  public AuthorNotFoundException(String message) {
-    super("Author not found. name: %s".formatted(message));
-  }
 }

@@ -20,6 +20,7 @@ import shop.ink3.api.book.tag.dto.TagUpdateRequest;
 import shop.ink3.api.book.tag.service.TagService;
 import shop.ink3.api.common.dto.CommonResponse;
 import shop.ink3.api.common.dto.PageResponse;
+import shop.ink3.api.common.exception.BadRequestException;
 
 @RequiredArgsConstructor
 @RestController
@@ -42,7 +43,7 @@ public class TagController {
         } else if (name != null) {
             return ResponseEntity.ok(CommonResponse.success(tagService.getTagByName(name)));
         } else {
-            throw new IllegalArgumentException("Either id or name must be provided");
+            throw new BadRequestException("Either id or name must be provided");
         }
     }
 
