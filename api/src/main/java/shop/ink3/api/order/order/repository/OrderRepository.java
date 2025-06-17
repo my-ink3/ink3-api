@@ -3,7 +3,6 @@ package shop.ink3.api.order.order.repository;
 import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import shop.ink3.api.order.order.dto.OrderWithDetailsResponse;
@@ -13,7 +12,6 @@ import shop.ink3.api.order.order.entity.OrderStatus;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // 전체적으로 querydsl을 프로젝트에서 사용안함 + 쿼리 성능 향상이 목표이기 때문에 native query 사용
-    //TODO 유지보수를 위해 querydsl 방식으로 수정 해야할거 같음
     @Query(
             value = """
         SELECT\s
