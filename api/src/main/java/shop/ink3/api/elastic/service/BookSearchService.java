@@ -25,7 +25,7 @@ import shop.ink3.api.book.book.dto.BookDetailResponse;
 import shop.ink3.api.book.book.dto.BookPreviewResponse;
 import shop.ink3.api.book.book.entity.Book;
 import shop.ink3.api.book.book.repository.BookRepository;
-import shop.ink3.api.book.bookAuthor.repository.BookAuthorRepository;
+import shop.ink3.api.book.bookauthor.repository.BookAuthorRepository;
 import shop.ink3.api.common.config.ElasticsearchConfig;
 import shop.ink3.api.common.dto.PageResponse;
 import shop.ink3.api.common.uploader.MinioService;
