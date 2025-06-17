@@ -22,8 +22,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import jakarta.persistence.EntityNotFoundException;
 import shop.ink3.api.book.book.entity.Book;
 import shop.ink3.api.book.book.repository.BookRepository;
+import shop.ink3.api.book.bookcategory.repository.BookCategoryRepository;
 import shop.ink3.api.book.category.entity.Category;
 import shop.ink3.api.book.category.repository.CategoryRepository;
 import shop.ink3.api.common.dto.PageResponse;
@@ -60,6 +62,8 @@ class CouponServiceTest {
     private CategoryCouponRepository categoryCouponRepository;
     @Mock
     private BookRepository bookRepository;
+    @Mock
+    private BookCategoryRepository bookCategoryRepository;
     @Mock
     private CategoryRepository categoryRepository;
     @Mock
@@ -103,6 +107,44 @@ class CouponServiceTest {
 
         verify(policyRepository).findById(1L);
         verify(couponRepository).save(any(Coupon.class));
+    }
+
+    @Test
+    @DisplayName("createCoupon - bookId 존재하지 않으면 예외")
+    void createCoupon_invalidBookId_throws() {
+        LocalDateTime now = LocalDateTime.now();
+        CouponCreateRequest req = new CouponCreateRequest(
+            1L, "invalid-book",
+            now, now.plusDays(5), true,
+            List.of(1000L), List.of()
+        );
+
+        when(policyRepository.findById(1L)).thenReturn(Optional.of(
+            CouponPolicy.builder().id(1L).name("P1").discountPercentage(10).discountValue(0).build()));
+
+        when(bookRepository.findAllById(List.of(1000L))).thenReturn(List.of());
+
+        assertThrows(IllegalArgumentException.class,
+            () -> couponService.createCoupon(req));
+    }
+
+    @Test
+    @DisplayName("createCoupon - categoryId 존재하지 않으면 예외")
+    void createCoupon_invalidCategoryId_throws() {
+        LocalDateTime now = LocalDateTime.now();
+        CouponCreateRequest req = new CouponCreateRequest(
+            1L, "invalid-category",
+            now, now.plusDays(5), true,
+            List.of(), List.of(9000L)
+        );
+
+        when(policyRepository.findById(1L)).thenReturn(Optional.of(
+            CouponPolicy.builder().id(1L).name("P1").discountPercentage(10).discountValue(0).build()));
+
+        when(categoryRepository.findAllById(List.of(9000L))).thenReturn(List.of());
+
+        assertThrows(IllegalArgumentException.class,
+            () -> couponService.createCoupon(req));
     }
 
     @Test
@@ -326,6 +368,27 @@ class CouponServiceTest {
 
         assertThrows(CouponInUseException.class,
             () -> couponService.getCouponsByCategoryId(1L, Pageable.unpaged()));
+    }
+
+    @Test
+    @DisplayName("getCouponByParentId - 도서가 존재하지 않으면 예외")
+    void getCouponsByParentId_bookNotFound() {
+        when(bookRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class,
+            () -> couponService.getCouponsByParentId(1L, Pageable.unpaged()));
+    }
+
+    @Test
+    @DisplayName("getCouponByParentId - 유효한 쿠폰이 없으면 예외")
+    void getCouponsByParentId_noValidCoupons() {
+        Book book = mock(Book.class);
+        when(book.getId()).thenReturn(1L);
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+        when(bookCategoryRepository.findAllByBookId(1L)).thenReturn(List.of());
+        when(categoryCouponRepository.findAllByCategoryIdInWithFetch(any())).thenReturn(List.of());
+
+        assertThrows(CouponNotFoundException.class,
+            () -> couponService.getCouponsByParentId(1L, Pageable.unpaged()));
     }
 
     @Test

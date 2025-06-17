@@ -1,138 +1,136 @@
 package shop.ink3.api.book.category.controller;
 
+import static org.mockito.BDDMockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.util.List;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import shop.ink3.api.book.category.dto.CategoryChangeParentRequest;
+import shop.ink3.api.book.category.dto.CategoryCreateRequest;
+import shop.ink3.api.book.category.dto.CategoryFlatDto;
+import shop.ink3.api.book.category.dto.CategoryTreeDto;
+import shop.ink3.api.book.category.dto.CategoryUpdateNameRequest;
+import shop.ink3.api.book.category.service.CategoryService;
+
+@WebMvcTest(CategoryController.class)
 class CategoryControllerTest {
-//
-//    private CategoryRepository categoryRepository;
-//    private CategoryService categoryService;
-//
-//    @BeforeEach
-//    void setUp() {
-//        categoryRepository = mock(CategoryRepository.class);
-//        categoryService = new CategoryService(categoryRepository);
-//    }
-//
-//    @Test
-//    void createCategory_shouldCreateNewCategory() {
-//        CategoryCreateRequest request = new CategoryCreateRequest("컴퓨터", null);
-//        Category category = Category.builder().id(1L).name("컴퓨터").build();
-//
-//        when(categoryRepository.existsByName("컴퓨터")).thenReturn(false);
-//        when(categoryRepository.save(any())).thenReturn(category);
-//
-//        var response = categoryService.createCategory(request);
-//
-//        assertThat(response.name()).isEqualTo("컴퓨터");
-//        verify(categoryRepository).save(any());
-//    }
-//
-//    @Test
-//    void createCategory_whenNameExists_shouldThrowException() {
-//        when(categoryRepository.existsByName("컴퓨터")).thenReturn(true);
-//
-//        CategoryCreateRequest request = new CategoryCreateRequest("컴퓨터", null);
-//
-//        assertThatThrownBy(() -> categoryService.createCategory(request))
-//                .isInstanceOf(CategoryAlreadyExistsException.class);
-//    }
-//
-//    @Test
-//    void updateCategory_shouldUpdateSuccessfully() {
-//        Category existing = Category.builder().id(1L).name("컴퓨터").build();
-//        CategoryUpdateRequest request = new CategoryUpdateRequest("프로그래밍", null);
-//
-//        when(categoryRepository.findById(1L)).thenReturn(Optional.of(existing));
-//
-//        var result = categoryService.updateCategory(1L, request);
-//
-//        assertThat(result.name()).isEqualTo("프로그래밍");
-//    }
-//
-//    @Test
-//    void updateCategory_whenNotFound_shouldThrowException() {
-//        when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
-//
-//        CategoryUpdateRequest request = new CategoryUpdateRequest("프로그래밍", null);
-//
-//        assertThatThrownBy(() -> categoryService.updateCategory(1L, request))
-//                .isInstanceOf(CategoryNotFoundException.class);
-//    }
-//
-//    @Test
-//    void deleteCategory_shouldDeleteSuccessfully() {
-//        Category category = Category.builder().id(1L).name("컴퓨터").build();
-//        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-//
-//        categoryService.deleteCategory(1L);
-//        verify(categoryRepository).delete(category);
-//    }
-//
-//    @Test
-//    void deleteCategory_whenNotFound_shouldThrowException() {
-//        when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
-//
-//        assertThatThrownBy(() -> categoryService.deleteCategory(1L))
-//                .isInstanceOf(CategoryNotFoundException.class);
-//    }
-//
-//    @Test
-//    void getCategoryById_shouldReturnCategory() {
-//        Category category = Category.builder().id(1L).name("컴퓨터").build();
-//        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-//
-//        var result = categoryService.getCategoryById(1L);
-//        assertThat(result.name()).isEqualTo("컴퓨터");
-//    }
-//
-//    @Test
-//    void getCategoryTree_shouldBuildTree() {
-//        Category parent = Category.builder().id(1L).name("컴퓨터").build();
-//        Category child = Category.builder().id(2L).name("프로그래밍").parent(parent).build();
-//
-//        when(categoryRepository.findAll()).thenReturn(List.of(parent, child));
-//
-//        var tree = categoryService.getCategoryTree();
-//        assertThat(tree).hasSize(1);
-//        assertThat(tree.get(0).children()).hasSize(1);
-//        assertThat(tree.get(0).children().get(0).name()).isEqualTo("프로그래밍");
-//    }
-//
-//    @Test
-//    void updateCategory_shouldUpdateWithParent() {
-//        Category parent = Category.builder().id(99L).name("개발").build();
-//        Category existing = Category.builder().id(1L).name("컴퓨터").build();
-//
-//        CategoryUpdateRequest request = new CategoryUpdateRequest("프로그래밍", 99L);
-//
-//        when(categoryRepository.findById(1L)).thenReturn(Optional.of(existing));
-//        when(categoryRepository.findById(99L)).thenReturn(Optional.of(parent));
-//
-//        var result = categoryService.updateCategory(1L, request);
-//
-//        assertThat(result.name()).isEqualTo("프로그래밍");
-//        assertThat(result.parentId()).isEqualTo(99L);
-//    }
-//
-//    @Test
-//    void updateCategory_whenParentIdNotFound_shouldThrowException() {
-//        Category existing = Category.builder().id(1L).name("컴퓨터").build();
-//
-//        when(categoryRepository.findById(1L)).thenReturn(Optional.of(existing));
-//        when(categoryRepository.findById(99L)).thenReturn(Optional.empty());
-//
-//        CategoryUpdateRequest request = new CategoryUpdateRequest("프로그래밍", 99L);
-//
-//        assertThatThrownBy(() -> categoryService.updateCategory(1L, new CategoryUpdateRequest("프로그래밍", 99L)))
-//                .isInstanceOf(CategoryNotFoundException.class);
-//    }
-//
-//    @Test
-//    void createCategory_whenParentIdNotFound_shouldThrowException() {
-//        CategoryCreateRequest request = new CategoryCreateRequest("프론트엔드", 99L);
-//
-//        when(categoryRepository.existsByName("프론트엔드")).thenReturn(false);
-//        when(categoryRepository.findById(99L)).thenReturn(Optional.empty());
-//
-//        assertThatThrownBy(() -> categoryService.createCategory(request))
-//                .isInstanceOf(CategoryNotFoundException.class);
-//    }
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private CategoryService categoryService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Test
+    @DisplayName("카테고리 트리 조회")
+    void getAllCategoriesTree() throws Exception {
+        List<CategoryTreeDto> mockTree = List.of(new CategoryTreeDto(1L, "문학", List.of()));
+        given(categoryService.getCategoriesTree()).willReturn(mockTree);
+
+        mockMvc.perform(get("/categories/tree"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].id").value(1L));
+    }
+
+    @Test
+    @DisplayName("카테고리 평면 조회")
+    void getAllCategoriesFlat() throws Exception {
+        List<CategoryFlatDto> mockList = List.of(new CategoryFlatDto(1L, "문학", 1L, 0));
+        given(categoryService.getCategoriesFlat()).willReturn(mockList);
+
+        mockMvc.perform(get("/categories/flat"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].name").value("문학"));
+    }
+
+    @Test
+    @DisplayName("하위 카테고리 조회")
+    void getAllDescendants() throws Exception {
+        Long id = 1L;
+        CategoryTreeDto mockTree = new CategoryTreeDto(id, "문학", List.of());
+        given(categoryService.getAllDescendants(id)).willReturn(mockTree);
+
+        mockMvc.perform(get("/categories/{id}/descendants", id))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.id").value(id));
+    }
+
+    @Test
+    @DisplayName("상위 카테고리 조회")
+    void getAllAncestors() throws Exception {
+        Long id = 1L;
+        List<CategoryFlatDto> mockList = List.of(new CategoryFlatDto(1L, "문학", 1L, 0));
+        given(categoryService.getAllAncestors(id)).willReturn(mockList);
+
+        mockMvc.perform(get("/categories/{id}/ancestor", id))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].name").value("문학"));
+    }
+
+    @Test
+    @DisplayName("카테고리 생성")
+    void createCategory() throws Exception {
+        CategoryCreateRequest req = new CategoryCreateRequest("에세이", 1L);
+        CategoryTreeDto res = new CategoryTreeDto(10L, "에세이", List.of());
+
+        given(categoryService.createCategory(req)).willReturn(res);
+
+        mockMvc.perform(post("/categories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.name").value("에세이"));
+    }
+
+    @Test
+    @DisplayName("카테고리 이름 수정")
+    void updateCategoryName() throws Exception {
+        long id = 5L;
+        CategoryUpdateNameRequest req = new CategoryUpdateNameRequest("역사");
+
+        doNothing().when(categoryService).updateCategoryName(id, req);
+
+        mockMvc.perform(patch("/categories/{id}/name", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("카테고리 부모 변경")
+    void changeParent() throws Exception {
+        long id = 7L;
+        CategoryChangeParentRequest req = new CategoryChangeParentRequest(2L);
+
+        doNothing().when(categoryService).changeParent(id, req);
+
+        mockMvc.perform(patch("/categories/{id}/parent", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("카테고리 삭제")
+    void deleteCategory() throws Exception {
+        long id = 8L;
+        doNothing().when(categoryService).deleteCategory(id);
+
+        mockMvc.perform(delete("/categories/{id}", id))
+            .andExpect(status().isNoContent());
+    }
 }
