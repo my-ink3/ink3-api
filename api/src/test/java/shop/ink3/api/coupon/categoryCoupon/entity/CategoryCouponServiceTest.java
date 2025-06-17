@@ -18,7 +18,7 @@ import shop.ink3.api.book.category.repository.CategoryRepository;
 import shop.ink3.api.book.category.service.CategoryService;
 
 @ExtendWith(MockitoExtension.class)
-class CategoryServiceTest {
+class CategoryCouponServiceTest {
 
     @InjectMocks
     private CategoryService categoryService;
