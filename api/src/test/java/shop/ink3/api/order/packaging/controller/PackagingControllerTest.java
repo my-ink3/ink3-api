@@ -1,6 +1,5 @@
 package shop.ink3.api.order.packaging.controller;
 
-import static org.junit.jupiter.api.Assertions.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;

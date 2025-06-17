@@ -30,7 +30,6 @@ public class WelcomeCouponProducer {
             rabbitTemplate.convertAndSend("coupon.exchange", "coupon.welcome", rabbitMessage);
 
 
-
             log.info("Welcome 메시지 전송 성공: {}", message);
 
         } catch (JsonProcessingException e) {
