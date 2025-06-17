@@ -33,11 +33,8 @@ public class OrderService {
 
     // 생성 (회원)
     public OrderResponse createOrder(OrderCreateRequest request) {
-        User user = null;
-        if (Objects.nonNull(request.getUserId())) {
-            user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new UserNotFoundException(request.getUserId()));
-        }
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new UserNotFoundException(request.getUserId()));
 
         Order order = Order.builder()
                 .user(user)
