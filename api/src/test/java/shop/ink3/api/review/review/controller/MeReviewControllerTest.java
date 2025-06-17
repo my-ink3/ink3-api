@@ -66,7 +66,7 @@ class MeReviewControllerTest {
                 .param("rating", "5")
                 .header("X-User-Id", "1")
                 .contentType(MediaType.MULTIPART_FORM_DATA))
-            .andExpect(status().isOk())
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.data.title").value("제목"))
             .andExpect(jsonPath("$.data.images.length()").value(2))
             .andExpect(jsonPath("$.data.images[0]").value("image1.jpg"));
@@ -84,7 +84,7 @@ class MeReviewControllerTest {
                 .param("rating", "5")
                 .header("X-User-Id", "1")
                 .contentType(MediaType.MULTIPART_FORM_DATA))
-            .andExpect(status().isOk())
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.data.title").value("제목"));
     }
 
