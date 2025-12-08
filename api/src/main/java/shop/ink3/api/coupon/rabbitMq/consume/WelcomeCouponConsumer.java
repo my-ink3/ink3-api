@@ -20,6 +20,7 @@ import shop.ink3.api.coupon.store.service.CouponStoreService;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Profile("!test")
 public class WelcomeCouponConsumer {
     private final CouponStoreService couponStoreService;
     private final CouponServiceImpl couponService;
@@ -57,4 +58,5 @@ public class WelcomeCouponConsumer {
         // TODO: DB 기록, 수동 재처리 로직 등
     }
 }
+
 
