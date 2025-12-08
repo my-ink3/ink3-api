@@ -27,7 +27,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableRabbit
-@Profile("!test")
 public class RabbitConfig {
 
     public static final String EXCHANGE_NAME = "coupon.exchange";
@@ -143,5 +142,6 @@ public class RabbitConfig {
     }
 
 }
+
 
 
