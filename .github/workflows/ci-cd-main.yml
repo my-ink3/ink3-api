@@ -157,9 +157,22 @@ jobs:
             --TTB_KEY=$TTB_KEY > app.log 2>&1 &
           echo $! > app.pid
           
-      - name: Print app.log on startup failure
+      - name: Print server logs if health check fails
         if: failure()
-        run: cat app.log
+        run: |
+          echo "=== logs 디렉토리 구조 ==="
+          ls -R
+      
+          echo "=== 최신 로그 파일 찾는 중 ==="
+          LAST_LOG=$(ls -1t logs/10260/*.log | head -n 1 || echo "")
+          if [ -z "$LAST_LOG" ]; then
+            echo "logs/10260 안에 로그 파일이 없습니다."
+            exit 0
+          fi
+      
+          echo "=== 최신 로그 파일: $LAST_LOG ==="
+          tail -n 300 "$LAST_LOG"
+
 
 
       - name: Wait for application to start
