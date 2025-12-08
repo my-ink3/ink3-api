@@ -15,7 +15,13 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
-
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
+      direct:
+        auto-startup: false
+  
   h2:
     console:
       enabled: true
