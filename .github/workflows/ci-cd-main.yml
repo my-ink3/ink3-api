@@ -149,12 +149,16 @@ jobs:
         env:
           EUREKA_URL: ${{ secrets.EUREKA_URL }}
         run: |
-          nohup java -DELASTIC_KEY="$ELASTIC_KEY" -jar api/target/api-${{ steps.extract_version.outputs.version }}.jar \
-            --server.port=10260 \
-            --spring.profiles.active=test \
-            --eureka.client.enabled=false \
-            --spring.cloud.discovery.enabled=false \
-            --TTB_KEY=$TTB_KEY > app.log 2>&1 &
+          java -version
+          nohup java \
+            -Dspring.profiles.active=test \
+            -Deureka.client.enabled=false \
+            -Dspring.cloud.discovery.enabled=false \
+            -Dspring.cloud.config.enabled=false \
+            -DELASTIC_KEY="$ELASTIC_KEY" \
+            -DTTB_KEY="$TTB_KEY" \
+            -jar api/target/api-${{ steps.extract_version.outputs.version }}.jar \
+            --server.port=10260 &
           echo $! > app.pid
           
 
