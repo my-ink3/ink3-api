@@ -154,12 +154,17 @@ jobs:
             --spring.profiles.active=test \
             --TTB_KEY=$TTB_KEY > app.log 2>&1 &
           echo $! > app.pid
+          
+      - name: Print app.log on startup failure
+        if: failure()
+        run: cat app.log
+
 
       - name: Wait for application to start
         run: sleep 30
 
       - name: Check health endpoint
-        run: curl --fail http://localhost:10260/shop/actuator/health
+        run: curl --fail http://localhost:10260/actuator/health
 
       - name: Stop application
         run: kill $(cat app.pid)
