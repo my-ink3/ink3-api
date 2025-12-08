@@ -47,3 +47,5 @@ elasticsearch:
   url: http://s4.java21.net:9200
   index: ink3_books_dev
   key: ${ELASTIC_KEY}
+aladin:
+  ttb-key: ${TTB_KEY:dummy-ttb-key-for-test}
