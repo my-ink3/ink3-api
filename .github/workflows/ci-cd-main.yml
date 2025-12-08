@@ -23,7 +23,7 @@ env:
   MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
   MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
   ELASTIC_KEY: ${{ secrets.ELASTIC_KEY }}
-
+  
 jobs:
   build:
     name: Build JAR
@@ -152,6 +152,8 @@ jobs:
           nohup java -DELASTIC_KEY="$ELASTIC_KEY" -jar api/target/api-${{ steps.extract_version.outputs.version }}.jar \
             --server.port=10260 \
             --spring.profiles.active=test \
+            --eureka.client.enabled=false \
+            --spring.cloud.discovery.enabled=false \
             --TTB_KEY=$TTB_KEY > app.log 2>&1 &
           echo $! > app.pid
           
