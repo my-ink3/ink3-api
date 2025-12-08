@@ -12,7 +12,7 @@ env:
   RABBITMQ_USERNAME: ${{ secrets.RABBITMQ_USERNAME }}
   RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
   RABBITMQ_VIRTUAL_HOST: ${{ secrets.RABBITMQ_VIRTUAL_HOST_PROD }}
-  EUREKA_URL: ${{ secrets.DEV_EUREKA_URL }}
+  EUREKA_URL: ${{ secrets.EUREKA_URL }}
   DB_USERNAME: ${{ secrets.DB_USERNAME }}
   DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
   TTB_KEY: ${{ secrets.TTB_KEY }}
@@ -147,19 +147,34 @@ jobs:
 
       - name: Run application in background
         env:
-          EUREKA_URL: ${{ secrets.EUREKA_URL }}
+          EUREKA_URL: ${{ secrets.EUREKA_URL }}  
+          ELASTIC_KEY: ${{ secrets.ELASTIC_KEY }} 
         run: |
-          java -version
-          nohup java \
-            -Dspring.profiles.active=test \
-            -Deureka.client.enabled=false \
-            -Dspring.cloud.discovery.enabled=false \
-            -Dspring.cloud.config.enabled=false \
-            -DELASTIC_KEY="$ELASTIC_KEY" \
-            -DTTB_KEY="$TTB_KEY" \
-            -jar api/target/api-${{ steps.extract_version.outputs.version }}.jar \
-            --server.port=10260 &
+          nohup java -DELASTIC_KEY="$ELASTIC_KEY" -jar api/target/api-${{ steps.extract_version.outputs.version }}.jar \
+            --server.port=10260 \
+            --spring.profiles.active=test \
+            --TTB_KEY=$TTB_KEY > app.log 2>&1 &
           echo $! > app.pid
+      
+      - name: Wait for application to start (with retries)
+        run: |
+          for i in {1..12}; do
+            echo "[$i] health check..."
+            if curl --fail http://localhost:10260/shop/actuator/health; then
+              echo "App is UP"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "App did not become healthy in time"
+          exit 1
+      
+      - name: Print app log (last 200 lines)
+        if: failure()
+        run: |
+          echo "=== tail app.log ==="
+          tail -n 200 app.log || echo "no app.log"
+
           
 
       - name: Wait for application to start
