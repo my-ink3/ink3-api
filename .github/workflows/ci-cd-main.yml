@@ -157,13 +157,13 @@ jobs:
       
       - name: Wait for application to start (with retries)
         run: |
-          for i in {1..20}; do
+          for i in {1..15}; do
             echo "[$i] health check..."
             if curl --fail http://localhost:10260/shop/actuator/health; then
               echo "App is UP"
               exit 0
             fi
-            sleep 10
+            sleep 5
           done
           echo "App did not become healthy in time"
           exit 1
