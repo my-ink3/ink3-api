@@ -180,7 +180,7 @@ jobs:
           echo "=== tail app.log ==="
           tail -n 200 app.log || echo "no app.log"
 
-      - name: Print app log (last 200 lines)
+      - name: Print healthcheck curl
         run: |
           curl -sS http://localhost:10260/actuator/health | cat
 
