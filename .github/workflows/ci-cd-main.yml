@@ -126,6 +126,7 @@ jobs:
         ports:
           - 5672:5672
           - 15672:15672
+      
 
     steps:
       - name: Checkout code
@@ -178,6 +179,10 @@ jobs:
         run: |
           echo "=== tail app.log ==="
           tail -n 200 app.log || echo "no app.log"
+
+      - name: Print app log (last 200 lines)
+        run: |
+          curl -sS http://localhost:10260/actuator/health | cat
 
           
 
