@@ -165,7 +165,7 @@ jobs:
         run: |
           for i in {1..15}; do
             echo "[$i] health check..."
-            if curl --fail http://localhost:10260/actuator/health; then
+            if curl --fail -sS http://localhost:10260/actuator/health; then
               echo "App is UP"
               exit 0
             fi
