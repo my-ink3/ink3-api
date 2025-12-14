@@ -121,6 +121,11 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 5672:5672
+          - 15672:15672
 
     steps:
       - name: Checkout code
