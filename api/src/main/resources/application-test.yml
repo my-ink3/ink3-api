@@ -44,9 +44,9 @@ minio:
   host: ${MINIO_HOST}
   access-key: ${MINIO_ACCESS_KEY}
   secret-key: ${MINIO_SECRET_KEY}
-  review-bucket: ${MINIO_REVIEW_BUCKET:ink3-dev-reviews-images}
-  book-bucket: ${MINIO_BOOK_BUCKET:ink3-dev-books-images}
-  logo-bucket: ${MINIO_LOGO_BUCKET:ink3-logo}
+  review-bucket: ink3-dev-reviews-images
+  book-bucket: ink3-dev-books-images
+  logo-bucket: ink3-logo
 payment:
   toss:
     client_key: ${TOSS_PAYMENT_CLIENT_KEY}
