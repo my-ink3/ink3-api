@@ -36,6 +36,10 @@ management:
       enabled: false
     elasticsearch:
       enabled: false
+    endpoint:
+      health:
+        show-details: always
+        show-components: always
 logging:
   level:
     org.hibernate.SQL: debug
