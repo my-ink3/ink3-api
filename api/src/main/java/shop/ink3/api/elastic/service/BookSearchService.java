@@ -1,5 +1,9 @@
 package shop.ink3.api.elastic.service;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.GetResponse;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -8,7 +12,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.domain.PageImpl;
@@ -16,13 +21,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.core.GetResponse;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import shop.ink3.api.book.book.dto.BookDetailResponse;
 import shop.ink3.api.book.book.dto.BookPreviewResponse;
 import shop.ink3.api.book.book.entity.Book;
@@ -89,7 +87,6 @@ public class BookSearchService {
                         .index(index)
                         .from(page * size)
                         .size(size)
-                        .trackTotalHits(t -> t.enabled(true))
                         .query(q -> q.
                                 bool(b -> {
                                             b.should(sh -> sh.match(m -> m.field("title").query(keyword).boost(100f)));
@@ -127,9 +124,10 @@ public class BookSearchService {
                         .index(index)
                         .from(page * size)
                         .size(size)
-                        .trackTotalHits(t -> t.enabled(true))
                         .query(q -> q
-                                .bool(b -> b.filter(f -> f.term(t -> t.field("categories").value(category))))
+                            .bool(b -> b.filter(
+                                f -> f.term(t -> t.field("categories.keyword").value(category))
+                            ))
                         )
                         .sort(s -> s.field(f -> f.field(safeSortOption.getSortField()).order(safeSortOption.getSortOrder()))),
                 BookDocument.class
