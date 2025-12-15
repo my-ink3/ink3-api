@@ -125,7 +125,9 @@ public class BookSearchService {
                         .from(page * size)
                         .size(size)
                         .query(q -> q
-                                .bool(b -> b.filter(f -> f.term(t -> t.field("categories").value(category))))
+                            .bool(b -> b.filter(
+                                f -> f.term(t -> t.field("categories.keyword").value(category))
+                            ))
                         )
                         .sort(s -> s.field(f -> f.field(safeSortOption.getSortField()).order(safeSortOption.getSortOrder()))),
                 BookDocument.class
