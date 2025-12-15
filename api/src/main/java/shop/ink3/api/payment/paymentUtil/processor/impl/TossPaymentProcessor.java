@@ -23,7 +23,7 @@ public class TossPaymentProcessor implements PaymentProcessor {
     private static final String PAYMENT_KEY = "paymentKey";
     private static final String PAYMENT_AMOUNT = "amount";
     private static final String PAYMENT_ORDER_ID = "orderId";
-    private static final String AUTH_HEADER_PREFIX = "BASIC ";
+    private static final String AUTH_HEADER_PREFIX = "Basic ";
     private static final String PAYMENT_CANCEL_REASON = "cancelReason";
     private static final String PAYMENT_METHOD = "TOSS";
 
